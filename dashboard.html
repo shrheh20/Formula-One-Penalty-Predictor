@@ -43,13 +43,13 @@
                     <h2 class="text-2xl font-bold">Component Usage Overview</h2>
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <label class="text-sm font-medium text-gray-700">
-                            <span class="mb-1 block">Select team</span>
+                            <span class="mb-1 block">Teams</span>
                             <select id="teamFilter" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200">
                                 <option value="all">All teams</option>
                             </select>
                         </label>
                         <label class="text-sm font-medium text-gray-700">
-                            <span class="mb-1 block">Select component</span>
+                            <span class="mb-1 block">Components</span>
                             <select id="componentFilter" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200">
                                 <option value="all">All components</option>
                             </select>
@@ -263,20 +263,6 @@
             return { fill: '#10b981', stroke: '#047857', badge: 'bg-emerald-100 text-emerald-700 ring-emerald-200', text: 'Within limit' };
         }
 
-        function getDefaultComponentSelection(drivers) {
-            const scoreByComponent = {};
-
-            drivers.forEach(driver => {
-                Object.entries(driver.components || {}).forEach(([componentName, component]) => {
-                    const score = component.status === 'critical' ? 3 : component.status === 'warning' ? 2 : 1;
-                    scoreByComponent[componentName] = (scoreByComponent[componentName] || 0) + score;
-                });
-            });
-
-            return Object.entries(scoreByComponent)
-                .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || 'all';
-        }
-
         function toggleHighRiskDetail(driverCode) {
             expandedHighRiskCode = expandedHighRiskCode === driverCode ? null : driverCode;
             const highRiskPredictions = allDriversData.length
@@ -390,7 +376,6 @@
             const componentFilter = document.getElementById('componentFilter');
             const selectedTeam = teamFilter.value || 'all';
             const selectedComponent = componentFilter.value || 'all';
-            const defaultComponent = getDefaultComponentSelection(drivers);
             const teams = [...new Set(drivers.map(driver => driver.team).filter(Boolean))].sort();
             const components = [...new Set(drivers.flatMap(driver => Object.keys(driver.components || {})))].sort();
 
@@ -404,11 +389,9 @@
             `;
 
             teamFilter.value = teams.includes(selectedTeam) ? selectedTeam : 'all';
-            if (components.includes(selectedComponent) && selectedComponent !== 'all') {
-                componentFilter.value = selectedComponent;
-            } else {
-                componentFilter.value = components.includes(defaultComponent) ? defaultComponent : 'all';
-            }
+            componentFilter.value = selectedComponent === 'all' || components.includes(selectedComponent)
+                ? selectedComponent
+                : 'all';
         }
 
         function applyComponentFilters(drivers) {
