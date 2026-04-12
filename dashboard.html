@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Grid Penalty Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-red-600 to-red-800 rounded-lg shadow-lg p-6 mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">F1 Grid Penalty Predictor</h1>
+            <p class="text-red-100">Live component usage tracking and penalty predictions from the Flask API</p>
+        </div>
+
+        <div class="sticky top-0 z-20 mb-6 rounded-2xl border border-black/5 bg-white/95 px-2 shadow-sm backdrop-blur">
+            <div class="flex overflow-x-auto">
+                <button type="button" role="tab" aria-selected="true" data-section-tab="high-risk" onclick="setActiveSection('high-risk')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">High Risk</button>
+                <button type="button" role="tab" aria-selected="false" data-section-tab="component-overview" onclick="setActiveSection('component-overview')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">Components</button>
+                <button type="button" role="tab" aria-selected="false" data-section-tab="strategic-circuits" onclick="setActiveSection('strategic-circuits')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">Circuits</button>
+            </div>
+        </div>
+
+        <div id="tabPanels" class="min-h-[70vh]">
+            <!-- High Risk Drivers -->
+            <section id="high-risk" role="tabpanel" class="scroll-mt-28 rounded-2xl bg-white p-6 shadow">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold">High Risk Drivers</h2>
+                    <span id="highRiskBadge" class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
+                        Loading...
+                    </span>
+                </div>
+
+                <div id="highRiskDrivers" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="text-gray-500">Loading live predictions...</div>
+                </div>
+            </section>
+
+            <!-- All Drivers Component Status -->
+            <section id="component-overview" role="tabpanel" class="hidden scroll-mt-28 rounded-2xl bg-white p-6 shadow">
+                <div class="flex flex-col gap-4 mb-6 lg:flex-row lg:items-end lg:justify-between">
+                    <h2 class="text-2xl font-bold">Component Usage Overview</h2>
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <label class="text-sm font-medium text-gray-700">
+                            <span class="mb-1 block">Select team</span>
+                            <select id="teamFilter" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200">
+                                <option value="all">All teams</option>
+                            </select>
+                        </label>
+                        <label class="text-sm font-medium text-gray-700">
+                            <span class="mb-1 block">Select component</span>
+                            <select id="componentFilter" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200">
+                                <option value="all">All components</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div id="componentGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div class="text-gray-500">Loading driver component usage...</div>
+                </div>
+            </section>
+
+            <!-- Strategic Circuit Analysis -->
+            <section id="strategic-circuits" role="tabpanel" class="hidden scroll-mt-28 rounded-2xl bg-white p-6 shadow">
+                <h2 class="text-2xl font-bold mb-6">Strategic Penalty Circuits</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-green-700 mb-4">✓ Best for Penalties</h3>
+                        <div id="bestCircuits" class="space-y-3">
+                            <div class="text-gray-500">Loading circuit data...</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-red-700 mb-4">✗ Worst for Penalties</h3>
+                        <div id="worstCircuits" class="space-y-3">
+                            <div class="text-gray-500">Loading circuit data...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_RACE_NUMBER = 4;
+        let allDriversData = [];
+        let expandedHighRiskCode = null;
+        let activeSection = 'high-risk';
+        const COMPONENT_LAYOUT = {
+            'PU-CE': { x: 22, y: 49, labelX: 6, labelY: 42 },
+            'ES': { x: 34, y: 42, labelX: 36, labelY: 18 },
+            'MGU-K': { x: 49, y: 62, labelX: 43, labelY: 84 },
+            'TC': { x: 66, y: 46, labelX: 66, labelY: 18 },
+            'ICE': { x: 81, y: 50, labelX: 83, labelY: 23 },
+            'EXH': { x: 13, y: 35, labelX: 8, labelY: 16 },
+            'PU-ANC': { x: 58, y: 35, labelX: 57, labelY: 14 },
+        };
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function getDriverPhotoMarkup(driver, sizeClass = 'h-14 w-14') {
+            const label = escapeHtml(driver.full_name || driver.driver);
+            const photoPosition = driver.photo_position || 'center 18%';
+            const photoScale = driver.photo_scale || 1.05;
+
+            if (driver.photo_url) {
+                return `
+                    <div class="${sizeClass} overflow-hidden rounded-full ring-2 ring-white/80 shadow-sm bg-gray-100">
+                        <img
+                            src="${getAssetUrl(driver.photo_url)}"
+                            alt="${label}"
+                            class="h-full w-full object-cover"
+                            style="object-position: ${photoPosition}; transform: scale(${photoScale}); transform-origin: center;"
+                            loading="lazy"
+                            decoding="async"
+                            referrerpolicy="no-referrer"
+                            onerror="this.parentElement.outerHTML='<div class=&quot;${sizeClass} rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold ring-2 ring-white/80 shadow-sm&quot;>${escapeHtml(driver.driver)}</div>'"
+                        >
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="${sizeClass} rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold ring-2 ring-white/80 shadow-sm">
+                    ${escapeHtml(driver.driver)}
+                </div>
+            `;
+        }
+
+        function setActiveSection(sectionId) {
+            activeSection = sectionId;
+
+            document.querySelectorAll('[data-section-tab]').forEach(tab => {
+                const isActive = tab.dataset.sectionTab === sectionId;
+                tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                tab.classList.toggle('border-red-500', isActive);
+                tab.classList.toggle('text-red-600', isActive);
+                tab.classList.toggle('bg-red-50', isActive);
+                tab.classList.toggle('shadow-sm', isActive);
+                tab.classList.toggle('border-transparent', !isActive);
+                tab.classList.toggle('text-gray-900', !isActive);
+                tab.classList.toggle('bg-transparent', !isActive);
+                tab.classList.toggle('shadow-none', !isActive);
+            });
+
+            ['high-risk', 'component-overview', 'strategic-circuits'].forEach(id => {
+                const section = document.getElementById(id);
+                if (!section) {
+                    return;
+                }
+                section.hidden = id !== sectionId;
+                section.classList.toggle('hidden', id !== sectionId);
+            });
+
+            expandedHighRiskCode = sectionId === 'high-risk' ? expandedHighRiskCode : null;
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        }
+
+        function getTeamBadgeMarkup(driver, sizeClass = 'h-8 w-8') {
+            const teamName = escapeHtml(driver.team || 'Team');
+            const teamShort = teamName
+                .split(' ')
+                .map(word => word[0])
+                .join('')
+                .slice(0, 3)
+                .toUpperCase();
+            const badgeColor = driver.team_color || '#374151';
+
+            if (driver.team_badge_url) {
+                return `
+                    <div class="${sizeClass} shrink-0 rounded-xl p-1 shadow-sm flex items-center justify-center" style="background-color: ${badgeColor};">
+                        <img
+                            src="${getAssetUrl(driver.team_badge_url)}"
+                            alt="${teamName}"
+                            class="h-full w-full object-contain"
+                            loading="lazy"
+                            decoding="async"
+                        >
+                    </div>
+                `;
+            }
+
+            return `
+                <svg
+                    class="${sizeClass} shrink-0 rounded-xl shadow-sm"
+                    viewBox="0 0 96 96"
+                    aria-label="${teamName}"
+                    role="img"
+                >
+                    <rect x="6" y="6" width="84" height="84" rx="24" fill="${badgeColor}"></rect>
+                    <rect x="12" y="12" width="72" height="72" rx="18" fill="white" fill-opacity="0.12"></rect>
+                    <text x="48" y="56" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="white">${teamShort}</text>
+                </svg>
+            `;
+        }
+
+        function getApiBaseUrl() {
+            if (window.location.protocol === 'file:') {
+                return 'http://localhost:5001';
+            }
+
+            if (['localhost', '127.0.0.1'].includes(window.location.hostname) && window.location.port !== '5001') {
+                return `${window.location.protocol}//${window.location.hostname}:5001`;
+            }
+
+            return window.location.origin;
+        }
+
+        const API_BASE_URL = getApiBaseUrl();
+
+        function getAssetUrl(path) {
+            if (!path) {
+                return '';
+            }
+
+            if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+                return path;
+            }
+
+            return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+        }
+
+        async function fetchJson(path) {
+            const response = await fetch(`${API_BASE_URL}${path}`);
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
+
+            const payload = await response.json();
+            if (!payload.success && !payload.status) {
+                throw new Error(payload.error || 'Unknown API error');
+            }
+
+            return payload;
+        }
+
+        function setStatusBadge(isHealthy, label) {
+            const badge = document.getElementById('apiStatus');
+            if (!badge) {
+                return;
+            }
+            badge.textContent = label;
+            badge.className = `px-3 py-1 rounded-full text-sm font-semibold ${
+                isHealthy ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`;
+        }
+
+        function getStatusStyles(status) {
+            if (status === 'critical') {
+                return { fill: '#ef4444', stroke: '#b91c1c', badge: 'bg-red-100 text-red-700 ring-red-200', text: 'At limit' };
+            }
+            if (status === 'warning') {
+                return { fill: '#f59e0b', stroke: '#b45309', badge: 'bg-amber-100 text-amber-700 ring-amber-200', text: 'Final unit' };
+            }
+            return { fill: '#10b981', stroke: '#047857', badge: 'bg-emerald-100 text-emerald-700 ring-emerald-200', text: 'Within limit' };
+        }
+
+        function getDefaultComponentSelection(drivers) {
+            const scoreByComponent = {};
+
+            drivers.forEach(driver => {
+                Object.entries(driver.components || {}).forEach(([componentName, component]) => {
+                    const score = component.status === 'critical' ? 3 : component.status === 'warning' ? 2 : 1;
+                    scoreByComponent[componentName] = (scoreByComponent[componentName] || 0) + score;
+                });
+            });
+
+            return Object.entries(scoreByComponent)
+                .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || 'all';
+        }
+
+        function toggleHighRiskDetail(driverCode) {
+            expandedHighRiskCode = expandedHighRiskCode === driverCode ? null : driverCode;
+            const highRiskPredictions = allDriversData.length
+                ? window.__lastHighRiskPredictions || []
+                : [];
+            renderHighRiskDrivers(highRiskPredictions);
+        }
+
+        function renderCarComponentView(driver) {
+            const componentMarkers = Object.entries(driver.components || {})
+                .filter(([component]) => COMPONENT_LAYOUT[component])
+                .map(([component, details]) => {
+                    const layout = COMPONENT_LAYOUT[component];
+                    const styles = getStatusStyles(details.status);
+                    const textAnchor = layout.labelX < layout.x ? 'end' : 'start';
+
+                    return `
+                        <g>
+                            <line x1="${layout.x}%" y1="${layout.y}%" x2="${layout.labelX}%" y2="${layout.labelY}%" stroke="${styles.stroke}" stroke-width="2" stroke-linecap="round"></line>
+                            <circle cx="${layout.x}%" cy="${layout.y}%" r="14" fill="${styles.fill}" stroke="white" stroke-width="3"></circle>
+                            <text x="${layout.x}%" y="${layout.y + 1.2}%" text-anchor="middle" font-size="9" font-weight="700" fill="white">${escapeHtml(component)}</text>
+                            <text x="${layout.labelX}%" y="${layout.labelY}%" text-anchor="${textAnchor}" font-size="12" font-weight="700" fill="#111827">${details.count}/${details.limit}</text>
+                        </g>
+                    `;
+                })
+                .join('');
+
+            return `
+                <div class="mt-4 rounded-2xl border border-black/5 bg-white/80 p-4">
+                    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <div class="text-sm font-semibold text-gray-900">Component map</div>
+                            <div class="text-xs text-gray-500">Highlighted positions show current usage status</div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            ${['critical', 'warning', 'ok'].map(status => {
+                                const styles = getStatusStyles(status);
+                                return `<span class="rounded-full px-2 py-1 ring-1 ${styles.badge}">${styles.text}</span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                    <div>
+                        <svg viewBox="0 0 720 220" class="w-full">
+                            <image href="${getAssetUrl(driver.sidecar_url)}" x="56" y="42" width="608" height="136" preserveAspectRatio="xMidYMid meet" opacity="0.32"></image>
+                            ${componentMarkers}
+                        </svg>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderHighRiskDrivers(predictions) {
+            const container = document.getElementById('highRiskDrivers');
+            const highRiskDrivers = predictions.filter(driver => driver.penalty_probability >= 50);
+            const badge = document.getElementById('highRiskBadge');
+            window.__lastHighRiskPredictions = predictions;
+
+            badge.textContent = `${highRiskDrivers.length} drivers at 50%+ risk`;
+
+            if (highRiskDrivers.length === 0) {
+                container.innerHTML = `
+                    <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
+                        No drivers are currently above the 50% risk threshold in the loaded dataset.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = highRiskDrivers.map(driver => {
+                const isExpanded = expandedHighRiskCode === driver.driver;
+
+                return `
+                <button type="button" onclick="toggleHighRiskDetail('${driver.driver}')" class="w-full text-left border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+                    <div class="mb-3 flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            ${getDriverPhotoMarkup(driver)}
+                            <div>
+                                <div class="font-bold text-lg">${driver.full_name || driver.driver}</div>
+                                <div class="mt-1 flex items-center gap-2 text-sm text-gray-600">
+                                    ${getTeamBadgeMarkup(driver, 'h-7 w-7')}
+                                    <span>${driver.driver}${driver.team ? ` · ${driver.team}` : ''}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-3xl font-bold text-red-600">${driver.penalty_probability}%</div>
+                            <div class="text-xs text-gray-500">Penalty Risk</div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <p class="text-sm font-semibold text-gray-700 mb-2">Issues:</p>
+                        <div class="flex flex-wrap gap-2">
+                            ${driver.reasons.map(reason => `<span class="rounded-full bg-white px-3 py-1 text-sm text-gray-700 ring-1 ring-red-200">${reason}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between border-t border-red-200 pt-3 text-sm">
+                        <div>
+                            <div class="font-semibold text-red-700">${driver.recommendation}</div>
+                            <div class="mt-1 text-xs text-gray-600">${driver.penalty_prediction || driver.penalty_summary}</div>
+                        </div>
+                        <span class="text-gray-400" aria-hidden="true">${isExpanded ? '▴' : '▾'}</span>
+                    </div>
+                    ${isExpanded ? renderCarComponentView(driver) : ''}
+                </button>
+            `;
+            }).join('');
+        }
+
+        function populateComponentFilters(drivers) {
+            const teamFilter = document.getElementById('teamFilter');
+            const componentFilter = document.getElementById('componentFilter');
+            const selectedTeam = teamFilter.value || 'all';
+            const selectedComponent = componentFilter.value || 'all';
+            const defaultComponent = getDefaultComponentSelection(drivers);
+            const teams = [...new Set(drivers.map(driver => driver.team).filter(Boolean))].sort();
+            const components = [...new Set(drivers.flatMap(driver => Object.keys(driver.components || {})))].sort();
+
+            teamFilter.innerHTML = `
+                <option value="all">All teams</option>
+                ${teams.map(team => `<option value="${team}">${team}</option>`).join('')}
+            `;
+            componentFilter.innerHTML = `
+                <option value="all">All components</option>
+                ${components.map(component => `<option value="${component}">${component}</option>`).join('')}
+            `;
+
+            teamFilter.value = teams.includes(selectedTeam) ? selectedTeam : 'all';
+            if (components.includes(selectedComponent) && selectedComponent !== 'all') {
+                componentFilter.value = selectedComponent;
+            } else {
+                componentFilter.value = components.includes(defaultComponent) ? defaultComponent : 'all';
+            }
+        }
+
+        function applyComponentFilters(drivers) {
+            const selectedTeam = document.getElementById('teamFilter').value || 'all';
+            const selectedComponent = document.getElementById('componentFilter').value || 'all';
+
+            return drivers
+                .filter(driver => selectedTeam === 'all' || driver.team === selectedTeam)
+                .map(driver => {
+                    const components = selectedComponent === 'all'
+                        ? driver.components
+                        : Object.fromEntries(
+                            Object.entries(driver.components || {}).filter(([componentName]) => componentName === selectedComponent)
+                        );
+
+                    return {
+                        ...driver,
+                        components
+                    };
+                })
+                .filter(driver => Object.keys(driver.components || {}).length > 0);
+        }
+
+        function renderComponentGrid(drivers) {
+            const container = document.getElementById('componentGrid');
+            const filteredDrivers = applyComponentFilters(drivers);
+
+            if (filteredDrivers.length === 0) {
+                container.innerHTML = `
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 md:col-span-2 lg:col-span-3">
+                        No drivers match the current team/component filter combination.
+                    </div>
+                `;
+                return;
+            }
+
+            const sortedDrivers = [...filteredDrivers].sort((a, b) => {
+                const aMax = Math.max(...Object.values(a.components).map(component => component.count / component.limit));
+                const bMax = Math.max(...Object.values(b.components).map(component => component.count / component.limit));
+                return bMax - aMax;
+            });
+
+            container.innerHTML = sortedDrivers.map(driver => {
+                const componentList = Object.entries(driver.components);
+                const riskLevel = componentList.some(([, component]) => component.status === 'critical')
+                    ? 'critical'
+                    : componentList.some(([, component]) => component.status === 'warning')
+                        ? 'warning'
+                        : 'ok';
+                const teamColor = driver.team_color || '#374151';
+                const statusRing = riskLevel === 'critical'
+                    ? 'ring-2 ring-red-300'
+                    : riskLevel === 'warning'
+                        ? 'ring-2 ring-amber-300'
+                        : 'ring-1 ring-black/5';
+                return `
+                    <div class="rounded-lg p-4 shadow-sm ${statusRing}" style="background: linear-gradient(180deg, ${teamColor}20 0%, #ffffff 30%); border-top: 4px solid ${teamColor};">
+                        <div class="mb-3 flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                ${getDriverPhotoMarkup(driver, 'h-12 w-12')}
+                                <div>
+                                    <div class="font-bold text-lg">${driver.driver}</div>
+                                    <div class="text-sm text-gray-600">${driver.full_name || ''}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 rounded-full bg-white/80 px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm">
+                                ${getTeamBadgeMarkup(driver, 'h-7 w-7')}
+                                <span>${driver.team || 'Unknown Team'}</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            ${componentList.map(([comp, component]) => {
+                                const percentage = (component.count / component.limit) * 100;
+                                const barColor = component.status === 'critical' ? 'bg-red-500' :
+                                                 component.status === 'warning' ? 'bg-yellow-500' : 'bg-green-500';
+                                
+                                return `
+                                    <div>
+                                        <div class="text-xs text-gray-600 mb-1">${comp}</div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="${barColor} h-2 rounded-full" style="width: ${percentage}%"></div>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">${component.count}/${component.limit}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCircuits(circuits) {
+            const bestContainer = document.getElementById('bestCircuits');
+            const worstContainer = document.getElementById('worstCircuits');
+
+            bestContainer.innerHTML = circuits.best_for_penalties.map(circuit => `
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="font-bold text-lg mb-1">${circuit.circuit}</div>
+                    <p class="text-sm text-gray-600 mb-2">${circuit.reason}</p>
+                    <div class="text-sm font-semibold text-green-700">
+                        Expected positions lost: ~${circuit.expected_positions_lost}
+                    </div>
+                </div>
+            `).join('');
+
+            worstContainer.innerHTML = circuits.worst_for_penalties.map(circuit => `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="font-bold text-lg mb-1">${circuit.circuit}</div>
+                    <p class="text-sm text-gray-600 mb-2">${circuit.reason}</p>
+                    <div class="text-sm font-semibold text-red-700">
+                        Expected positions lost: ~${circuit.expected_positions_lost}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function wireComponentFilters() {
+            document.getElementById('teamFilter').addEventListener('change', () => renderComponentGrid(allDriversData));
+            document.getElementById('componentFilter').addEventListener('change', () => renderComponentGrid(allDriversData));
+        }
+
+        function renderError(error) {
+            setStatusBadge(false, 'API unavailable');
+            document.getElementById('highRiskBadge').textContent = 'Load failed';
+            document.getElementById('highRiskDrivers').innerHTML = `
+                <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+                    Could not load live data from <code>${API_BASE_URL}</code>. Start the Flask API on port 5001 and refresh.
+                    <div class="mt-2 text-sm text-red-700">${error.message}</div>
+                </div>
+            `;
+            document.getElementById('componentGrid').innerHTML = '';
+            document.getElementById('bestCircuits').innerHTML = '';
+            document.getElementById('worstCircuits').innerHTML = '';
+        }
+
+        async function loadDashboard() {
+            try {
+                const [health, predictions, drivers, circuits] = await Promise.all([
+                    fetchJson('/api/health'),
+                    fetchJson(`/api/predictions?race=${DEFAULT_RACE_NUMBER}`),
+                    fetchJson('/api/drivers'),
+                    fetchJson('/api/circuits')
+                ]);
+
+                setStatusBadge(true, 'API healthy');
+                allDriversData = drivers.drivers;
+                populateComponentFilters(allDriversData);
+                renderHighRiskDrivers(predictions.predictions);
+                renderComponentGrid(allDriversData);
+                renderCircuits(circuits.circuits);
+            } catch (error) {
+                renderError(error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setActiveSection(activeSection);
+            wireComponentFilters();
+            loadDashboard();
+        });
+    </script>
+</body>
+</html>

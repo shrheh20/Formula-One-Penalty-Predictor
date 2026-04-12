@@ -1,0 +1,97 @@
+{
+  "season": 2026,
+  "as_of_date": "2026-04-11",
+  "coverage_note": "FIA-published completed rounds available as of April 11, 2026: Australia, China, and Japan. The FIA season page marked Bahrain and Saudi Arabian Grands Prix as called off at that time.",
+  "season_page_url": "https://www.fia.com/championship/fia-formula-one-world-championship",
+  "regulations": {
+    "name": "2026 Formula 1 Power Unit Sporting Regulations",
+    "url": "https://api.fia.com/sites/default/files/fia_2026_formula_1_sporting_regulations_pu_-_issue_7_-_2024-10-17.pdf",
+    "note": "The document states that power unit usage provisions moved to Article B8.2 of the 2026 Formula 1 Regulations, and the race-weekend Technical Delegate reports are used here as the operational source of truth."
+  },
+  "events": [
+    {
+      "round": 1,
+      "name": "Grand Prix of Australia",
+      "weekend_dates": "2026-03-06 to 2026-03-08",
+      "event_documents_url": "https://www.fia.com/documents/championships/fia-formula-one-world-championship-14/season/season-2026-2072/event/Grand%20Prix%20of%20Australia",
+      "relevant_documents": [
+        {
+          "title": "Doc 14 - New PU elements for this Competition",
+          "published_at_cet": "2026-03-06 02:34",
+          "url": "https://www.fia.com/system/files/decision-document/2026_australian_grand_prix_-_new_pu_elements_for_this_competition.pdf"
+        },
+        {
+          "title": "Doc 34 - New PU elements for this Competition",
+          "published_at_cet": "2026-03-07 07:00",
+          "url": "https://www.fia.com/system/files/decision-document/2026_australian_grand_prix_-_new_pu_elements_for_this_competition_1.pdf"
+        },
+        {
+          "title": "Doc 52 - New PU elements for this Competition",
+          "published_at_cet": "2026-03-08 02:25",
+          "url": "https://www.fia.com/system/files/decision-document/2026_australian_grand_prix_-_new_pu_elements_for_this_competition_1.pdf"
+        },
+        {
+          "title": "Doc 56 - New PU elements for this Competition",
+          "published_at_cet": "2026-03-08 04:30",
+          "url": "https://www.fia.com/system/files/decision-document/2026_australian_grand_prix_-_new_pu_elements_for_this_competition_2.pdf"
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "name": "Grand Prix of China",
+      "weekend_dates": "2026-03-13 to 2026-03-15",
+      "event_documents_url": "https://www.fia.com/documents/championships/fia-formula-one-world-championship-14/season/season-2026-2072/event/Grand%20Prix%20of%20China",
+      "relevant_documents": [
+        {
+          "title": "Doc 9 - PU elements used per driver up to now",
+          "published_at_cet": "2026-03-13 00:00",
+          "url": "https://www.fia.com/system/files/decision-document/2026_chinese_grand_prix_-_pu_elements_used_per_driver_up_to_now.pdf"
+        },
+        {
+          "title": "Doc 15 - New PU elements for this Competition",
+          "published_at_cet": "2026-03-13 04:40",
+          "url": "https://www.fia.com/system/files/decision-document/2026_chinese_grand_prix_-_new_pu_elements_for_this_competition.pdf"
+        },
+        {
+          "title": "Doc 22 - New PU elements for this Competition",
+          "published_at_cet": "2026-03-13 08:46",
+          "url": "https://www.fia.com/system/files/decision-document/2026_chinese_grand_prix_-_new_pu_elements_for_this_competition_0.pdf"
+        },
+        {
+          "title": "Doc 56 - New PU elements for this Competition",
+          "published_at_cet": "2026-03-14 08:24",
+          "url": "https://www.fia.com/system/files/decision-document/2026_chinese_grand_prix_-_new_pu_elements_for_this_competition_1.pdf"
+        },
+        {
+          "title": "Doc 69 - New PU elements for this Competition",
+          "published_at_cet": "2026-03-15 05:52",
+          "url": "https://www.fia.com/system/files/decision-document/2026_chinese_grand_prix_-_new_pu_elements_for_this_competition_2.pdf"
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "name": "Japanese Grand Prix",
+      "weekend_dates": "2026-03-27 to 2026-03-29",
+      "event_documents_url": "https://www.fia.com/documents/championships/fia-formula-one-world-championship-14/season/season-2026-2072/event/Japanese%20Grand%20Prix",
+      "relevant_documents": [
+        {
+          "title": "Doc 9 - PU elements used per driver up to now",
+          "published_at_cet": "2026-03-27 00:07",
+          "url": "https://www.fia.com/system/files/decision-document/2026_japanese_grand_prix_-_pu_elements_used_per_driver_up_to_now.pdf"
+        },
+        {
+          "title": "Doc 13 - New PU elements for this Competition",
+          "published_at_cet": "2026-03-27 03:42",
+          "url": "https://www.fia.com/system/files/decision-document/2026_japanese_grand_prix_-_new_pu_elements_for_this_competition.pdf"
+        },
+        {
+          "title": "Doc 40 - New PU elements for this Competition",
+          "published_at_cet": "2026-03-28 04:16",
+          "url": "https://www.fia.com/system/files/decision-document/2026_japanese_grand_prix_-_new_pu_elements_for_this_competition_0.pdf"
+        }
+      ]
+    }
+  ]
+}

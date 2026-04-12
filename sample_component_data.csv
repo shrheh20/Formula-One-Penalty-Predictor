@@ -1,0 +1,98 @@
+Driver,Team,Race,Component_Type,Component_Number,Status,Race_Name
+VER,Red Bull Racing,1,ICE,1,Active,Bahrain
+VER,Red Bull Racing,1,TC,1,Active,Bahrain
+VER,Red Bull Racing,1,MGU-H,1,Active,Bahrain
+VER,Red Bull Racing,1,MGU-K,1,Active,Bahrain
+VER,Red Bull Racing,1,ES,1,Active,Bahrain
+VER,Red Bull Racing,1,CE,1,Active,Bahrain
+VER,Red Bull Racing,8,ICE,2,Active,Monaco
+VER,Red Bull Racing,15,ICE,3,Active,Singapore
+VER,Red Bull Racing,20,ICE,4,Active,Brazil
+HAM,Mercedes,1,ICE,1,Retired,Bahrain
+HAM,Mercedes,3,ICE,2,Active,Australia
+HAM,Mercedes,3,TC,2,Active,Australia
+HAM,Mercedes,8,ICE,3,Active,Monaco
+HAM,Mercedes,12,MGU-K,2,Active,Belgium
+HAM,Mercedes,18,ICE,4,Active,USA
+HAM,Mercedes,18,TC,3,Active,USA
+LEC,Ferrari,1,ICE,1,Active,Bahrain
+LEC,Ferrari,1,TC,1,Active,Bahrain
+LEC,Ferrari,1,MGU-H,1,Active,Bahrain
+LEC,Ferrari,1,MGU-K,1,Active,Bahrain
+LEC,Ferrari,1,ES,1,Active,Bahrain
+LEC,Ferrari,1,CE,1,Active,Bahrain
+LEC,Ferrari,6,ICE,2,Active,Spain
+LEC,Ferrari,12,ICE,3,Active,Belgium
+LEC,Ferrari,17,TC,2,Active,Japan
+LEC,Ferrari,20,ICE,4,Active,Brazil
+LEC,Ferrari,20,TC,3,Active,Brazil
+SAI,Ferrari,1,ICE,1,Active,Bahrain
+SAI,Ferrari,1,TC,1,Active,Bahrain
+SAI,Ferrari,1,MGU-H,1,Active,Bahrain
+SAI,Ferrari,1,MGU-K,1,Active,Bahrain
+SAI,Ferrari,1,ES,1,Active,Bahrain
+SAI,Ferrari,1,CE,1,Active,Bahrain
+SAI,Ferrari,7,ICE,2,Active,Canada
+SAI,Ferrari,14,ICE,3,Active,Italy
+SAI,Ferrari,19,ICE,4,Active,Mexico
+SAI,Ferrari,19,TC,2,Active,Mexico
+NOR,McLaren,1,ICE,1,Active,Bahrain
+NOR,McLaren,1,TC,1,Active,Bahrain
+NOR,McLaren,1,MGU-H,1,Active,Bahrain
+NOR,McLaren,1,MGU-K,1,Active,Bahrain
+NOR,McLaren,1,ES,1,Active,Bahrain
+NOR,McLaren,1,CE,1,Active,Bahrain
+NOR,McLaren,10,ICE,2,Active,Britain
+NOR,McLaren,16,ICE,3,Active,Azerbaijan
+PIA,McLaren,1,ICE,1,Active,Bahrain
+PIA,McLaren,1,TC,1,Active,Bahrain
+PIA,McLaren,1,MGU-H,1,Active,Bahrain
+PIA,McLaren,1,MGU-K,1,Active,Bahrain
+PIA,McLaren,1,ES,1,Active,Bahrain
+PIA,McLaren,1,CE,1,Active,Bahrain
+PIA,McLaren,9,ICE,2,Active,Austria
+PIA,McLaren,17,ICE,3,Active,Japan
+ALO,Aston Martin,1,ICE,1,Active,Bahrain
+ALO,Aston Martin,1,TC,1,Active,Bahrain
+ALO,Aston Martin,1,MGU-H,1,Active,Bahrain
+ALO,Aston Martin,1,MGU-K,1,Active,Bahrain
+ALO,Aston Martin,1,ES,1,Active,Bahrain
+ALO,Aston Martin,1,CE,1,Active,Bahrain
+ALO,Aston Martin,8,ICE,2,Active,Monaco
+ALO,Aston Martin,13,ICE,3,Active,Netherlands
+ALO,Aston Martin,19,ICE,4,Active,Mexico
+ALO,Aston Martin,19,TC,2,Active,Mexico
+ALO,Aston Martin,19,MGU-H,2,Active,Mexico
+STR,Aston Martin,1,ICE,1,Active,Bahrain
+STR,Aston Martin,1,TC,1,Active,Bahrain
+STR,Aston Martin,1,MGU-H,1,Active,Bahrain
+STR,Aston Martin,1,MGU-K,1,Active,Bahrain
+STR,Aston Martin,1,ES,1,Active,Bahrain
+STR,Aston Martin,1,CE,1,Active,Bahrain
+STR,Aston Martin,7,ICE,2,Active,Canada
+STR,Aston Martin,14,ICE,3,Active,Italy
+STR,Aston Martin,18,ICE,4,Active,USA
+STR,Aston Martin,18,TC,2,Active,USA
+STR,Aston Martin,18,MGU-K,2,Active,USA
+STR,Aston Martin,20,TC,3,Active,Brazil
+PER,Red Bull Racing,1,ICE,1,Active,Bahrain
+PER,Red Bull Racing,1,TC,1,Active,Bahrain
+PER,Red Bull Racing,1,MGU-H,1,Active,Bahrain
+PER,Red Bull Racing,1,MGU-K,1,Active,Bahrain
+PER,Red Bull Racing,1,ES,1,Active,Bahrain
+PER,Red Bull Racing,1,CE,1,Active,Bahrain
+PER,Red Bull Racing,6,ICE,2,Active,Spain
+PER,Red Bull Racing,11,ICE,3,Active,Hungary
+PER,Red Bull Racing,17,ICE,4,Active,Japan
+PER,Red Bull Racing,17,TC,2,Active,Japan
+PER,Red Bull Racing,21,TC,3,Active,Qatar
+RUS,Mercedes,1,ICE,1,Active,Bahrain
+RUS,Mercedes,1,TC,1,Active,Bahrain
+RUS,Mercedes,1,MGU-H,1,Active,Bahrain
+RUS,Mercedes,1,MGU-K,1,Active,Bahrain
+RUS,Mercedes,1,ES,1,Active,Bahrain
+RUS,Mercedes,1,CE,1,Active,Bahrain
+RUS,Mercedes,9,ICE,2,Active,Austria
+RUS,Mercedes,15,ICE,3,Active,Singapore
+RUS,Mercedes,20,ICE,4,Active,Brazil
+RUS,Mercedes,20,TC,2,Active,Brazil

@@ -1,0 +1,84 @@
+{
+  "season": 2026,
+  "generated_from": "circuit_weekend_results_2026.csv",
+  "generated_rounds": [
+    1,
+    2,
+    3
+  ],
+  "methodology": {
+    "summary": "Circuits are ranked by how recoverable poor starting positions were in official 2026 race weekends.",
+    "inputs": [
+      "Official starting grid",
+      "Official race result"
+    ],
+    "scoring_factors": [
+      "Average positions gained",
+      "Average positions gained by back-half starters",
+      "Back-half starters reaching the points",
+      "Top-10 starters falling out of the points",
+      "Classification rate"
+    ]
+  },
+  "best_for_penalties": [
+    {
+      "circuit": "Albert Park",
+      "grand_prix": "Australia",
+      "round": 1,
+      "score": 14.51,
+      "reason": "Better recovery than the other sampled 2026 circuits: back-half starters gained +2.5 places on average and 3 still scored points.",
+      "expected_positions_lost": 5,
+      "metrics": {
+        "avg_positions_gained": -0.95,
+        "back_half_avg_gain": 2.45,
+        "back_half_points_finishers": 3,
+        "top10_dropouts": 3,
+        "completion_rate": 0.727
+      },
+      "sources": {
+        "starting_grid": "https://www.formula1.com/en/results/2026/races/1279/australia/starting-grid",
+        "race_result": "https://www.formula1.com/en/results/2025/races/1279/australia/race-result"
+      }
+    },
+    {
+      "circuit": "Shanghai",
+      "grand_prix": "China",
+      "round": 2,
+      "score": 11.75,
+      "reason": "Better recovery than the other sampled 2026 circuits: back-half starters gained +1.4 places on average and 3 still scored points.",
+      "expected_positions_lost": 6,
+      "metrics": {
+        "avg_positions_gained": -1.27,
+        "back_half_avg_gain": 1.36,
+        "back_half_points_finishers": 3,
+        "top10_dropouts": 3,
+        "completion_rate": 0.682
+      },
+      "sources": {
+        "starting_grid": "https://www.formula1.com/en/results/2026/races/1280/china/starting-grid",
+        "race_result": "https://www.formula1.com/en/results/2026/races/1280/china/race-result"
+      }
+    }
+  ],
+  "worst_for_penalties": [
+    {
+      "circuit": "Suzuka",
+      "grand_prix": "Japan",
+      "round": 3,
+      "score": 9.28,
+      "reason": "More track-position sensitive than the other sampled 2026 circuits: back-half starters gained +0.6 places on average and 2 reached the points.",
+      "expected_positions_lost": 7,
+      "metrics": {
+        "avg_positions_gained": -0.14,
+        "back_half_avg_gain": 0.55,
+        "back_half_points_finishers": 2,
+        "top10_dropouts": 3,
+        "completion_rate": 0.909
+      },
+      "sources": {
+        "starting_grid": "https://www.formula1.com/en/results/2026/races/1281/japan/starting-grid",
+        "race_result": "https://www.formula1.com/en/results/2026/races/1281/japan/race-result"
+      }
+    }
+  ]
+}

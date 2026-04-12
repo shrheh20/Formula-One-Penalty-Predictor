@@ -1,0 +1,155 @@
+Driver,Car_Number,Team,Component_Type,Count,Limit,As_Of_Race,As_Of_Date,Source_Set
+PIA,81,McLaren Mercedes,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+PIA,81,McLaren Mercedes,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+PIA,81,McLaren Mercedes,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+PIA,81,McLaren Mercedes,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+PIA,81,McLaren Mercedes,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+PIA,81,McLaren Mercedes,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+PIA,81,McLaren Mercedes,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+NOR,1,McLaren Mercedes,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+NOR,1,McLaren Mercedes,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+NOR,1,McLaren Mercedes,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+NOR,1,McLaren Mercedes,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+NOR,1,McLaren Mercedes,ES,3,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+NOR,1,McLaren Mercedes,PU-CE,3,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+NOR,1,McLaren Mercedes,PU-ANC,2,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+RUS,63,Mercedes,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+RUS,63,Mercedes,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+RUS,63,Mercedes,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+RUS,63,Mercedes,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+RUS,63,Mercedes,ES,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+RUS,63,Mercedes,PU-CE,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+RUS,63,Mercedes,PU-ANC,2,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+ANT,12,Mercedes,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+ANT,12,Mercedes,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+ANT,12,Mercedes,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+ANT,12,Mercedes,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+ANT,12,Mercedes,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+ANT,12,Mercedes,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+ANT,12,Mercedes,PU-ANC,2,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+VER,3,Red Bull Racing RB Ford,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+VER,3,Red Bull Racing RB Ford,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+VER,3,Red Bull Racing RB Ford,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+VER,3,Red Bull Racing RB Ford,MGU-K,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+VER,3,Red Bull Racing RB Ford,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+VER,3,Red Bull Racing RB Ford,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+VER,3,Red Bull Racing RB Ford,PU-ANC,2,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAD,6,Red Bull Racing RB Ford,ICE,2,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAD,6,Red Bull Racing RB Ford,TC,2,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAD,6,Red Bull Racing RB Ford,EXH,2,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAD,6,Red Bull Racing RB Ford,MGU-K,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAD,6,Red Bull Racing RB Ford,ES,3,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAD,6,Red Bull Racing RB Ford,PU-CE,3,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAD,6,Red Bull Racing RB Ford,PU-ANC,2,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+LEC,16,Ferrari,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+LEC,16,Ferrari,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+LEC,16,Ferrari,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+LEC,16,Ferrari,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+LEC,16,Ferrari,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+LEC,16,Ferrari,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+LEC,16,Ferrari,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAM,44,Ferrari,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAM,44,Ferrari,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAM,44,Ferrari,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAM,44,Ferrari,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAM,44,Ferrari,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAM,44,Ferrari,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+HAM,44,Ferrari,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALB,23,Atlassian Williams Mercedes,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALB,23,Atlassian Williams Mercedes,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALB,23,Atlassian Williams Mercedes,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALB,23,Atlassian Williams Mercedes,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALB,23,Atlassian Williams Mercedes,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALB,23,Atlassian Williams Mercedes,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALB,23,Atlassian Williams Mercedes,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+SAI,55,Atlassian Williams Mercedes,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+SAI,55,Atlassian Williams Mercedes,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+SAI,55,Atlassian Williams Mercedes,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+SAI,55,Atlassian Williams Mercedes,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+SAI,55,Atlassian Williams Mercedes,ES,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+SAI,55,Atlassian Williams Mercedes,PU-CE,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+SAI,55,Atlassian Williams Mercedes,PU-ANC,2,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+LIN,41,Racing Bulls RB Ford,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+LIN,41,Racing Bulls RB Ford,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+LIN,41,Racing Bulls RB Ford,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+LIN,41,Racing Bulls RB Ford,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+LIN,41,Racing Bulls RB Ford,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+LIN,41,Racing Bulls RB Ford,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+LIN,41,Racing Bulls RB Ford,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+LAW,30,Racing Bulls RB Ford,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+LAW,30,Racing Bulls RB Ford,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+LAW,30,Racing Bulls RB Ford,EXH,2,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+LAW,30,Racing Bulls RB Ford,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+LAW,30,Racing Bulls RB Ford,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+LAW,30,Racing Bulls RB Ford,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+LAW,30,Racing Bulls RB Ford,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+STR,18,Aston Martin Aramco Honda,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+STR,18,Aston Martin Aramco Honda,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+STR,18,Aston Martin Aramco Honda,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+STR,18,Aston Martin Aramco Honda,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+STR,18,Aston Martin Aramco Honda,ES,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+STR,18,Aston Martin Aramco Honda,PU-CE,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+STR,18,Aston Martin Aramco Honda,PU-ANC,3,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALO,14,Aston Martin Aramco Honda,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALO,14,Aston Martin Aramco Honda,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALO,14,Aston Martin Aramco Honda,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALO,14,Aston Martin Aramco Honda,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALO,14,Aston Martin Aramco Honda,ES,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALO,14,Aston Martin Aramco Honda,PU-CE,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+ALO,14,Aston Martin Aramco Honda,PU-ANC,3,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+OCO,31,Haas Ferrari,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+OCO,31,Haas Ferrari,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+OCO,31,Haas Ferrari,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+OCO,31,Haas Ferrari,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+OCO,31,Haas Ferrari,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+OCO,31,Haas Ferrari,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+OCO,31,Haas Ferrari,PU-ANC,2,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+BEA,87,Haas Ferrari,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+BEA,87,Haas Ferrari,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+BEA,87,Haas Ferrari,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+BEA,87,Haas Ferrari,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+BEA,87,Haas Ferrari,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+BEA,87,Haas Ferrari,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+BEA,87,Haas Ferrari,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+HUL,27,Audi,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+HUL,27,Audi,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+HUL,27,Audi,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+HUL,27,Audi,MGU-K,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+HUL,27,Audi,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+HUL,27,Audi,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+HUL,27,Audi,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOR,5,Audi,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOR,5,Audi,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOR,5,Audi,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOR,5,Audi,MGU-K,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOR,5,Audi,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOR,5,Audi,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOR,5,Audi,PU-ANC,2,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+GAS,10,Alpine Mercedes,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+GAS,10,Alpine Mercedes,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+GAS,10,Alpine Mercedes,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+GAS,10,Alpine Mercedes,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+GAS,10,Alpine Mercedes,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+GAS,10,Alpine Mercedes,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+GAS,10,Alpine Mercedes,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+COL,43,Alpine Mercedes,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+COL,43,Alpine Mercedes,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+COL,43,Alpine Mercedes,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+COL,43,Alpine Mercedes,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+COL,43,Alpine Mercedes,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+COL,43,Alpine Mercedes,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+COL,43,Alpine Mercedes,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+PER,11,Cadillac Ferrari,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+PER,11,Cadillac Ferrari,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+PER,11,Cadillac Ferrari,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+PER,11,Cadillac Ferrari,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+PER,11,Cadillac Ferrari,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+PER,11,Cadillac Ferrari,PU-CE,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+PER,11,Cadillac Ferrari,PU-ANC,1,6,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOT,77,Cadillac Ferrari,ICE,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOT,77,Cadillac Ferrari,TC,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOT,77,Cadillac Ferrari,EXH,1,4,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOT,77,Cadillac Ferrari,MGU-K,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOT,77,Cadillac Ferrari,ES,1,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOT,77,Cadillac Ferrari,PU-CE,2,3,Japanese Grand Prix,2026-03-28,australia-china-japan
+BOT,77,Cadillac Ferrari,PU-ANC,2,6,Japanese Grand Prix,2026-03-28,australia-china-japan
