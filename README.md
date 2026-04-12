@@ -98,29 +98,6 @@ F1-PenaltyPredictor/
 └── ROADMAP.md                     # Future components roadmap
 ```
 
-## 🗓️ Roadmap
-
-- ✅ **Component 1** (Week 1-2): Grid Penalty Predictor - **SHIPPED**
-- 🚧 **Component 2** (Week 3-4): Reliability Risk Analyzer
-- 📅 **Component 3** (Week 5-6): Safety Car Predictor  
-- 📅 **Component 4** (Week 7-8): Qualifying Pace Predictor
-- 📅 **Component 5** (Week 9-10): Race Strategy Analyzer
-- 📅 **Component 6** (Week 11-12): Sentiment Tracker
-- 📅 **Component 7** (Week 13-14): Multi-Agent Orchestrator
-
-Each component ships independently and adds incremental value.
-
-## 💰 Betting Market Integration
-
-### Supported Markets (Component 1)
-- **Driver to start from back of grid** → Use penalty predictions
-- **Total grid penalties** → Sum high-risk drivers
-- **Strategic penalty timing** → Circuit analysis
-
-### Coming Soon
-- **Driver DNF** → Reliability analyzer (Component 2)
-- **Safety car periods** → SC predictor (Component 3)
-- **Qualifying positions** → Pace predictor (Component 4)
 
 ## 📊 Data Sources
 
@@ -137,37 +114,6 @@ Each component ships independently and adds incremental value.
 - Weather data
 - Press conference transcripts
 - Multi-language media sources
-
-## 🎓 How to Use for Betting
-
-### Example: Kalshi Market "Will there be a grid penalty at Bahrain?"
-
-**Step 1:** Check predictions
-```bash
-curl http://localhost:5001/api/predictions?race=4
-```
-
-**Step 2:** Analyze high-risk drivers
-```json
-{
-  "high_risk_drivers": [
-    {"driver": "NOR", "probability": 99.8},
-    {"driver": "HAD", "probability": 99.9}
-  ]
-}
-```
-
-**Step 3:** Decision
-- Market: "Will there be a penalty?" = 65% probability
-- Model: Shows Norris/Hadjar already at or beyond the highest-risk threshold
-- **Action:** Bet YES (value bet)
-
-## 🧪 Validation
-
-**Component 1 Accuracy:**
-- Track predictions vs actual penalties each race
-- Current sample size: Testing phase
-- Target accuracy: 80%+ for high-probability predictions (>70%)
 
 ## 🔧 Development
 
