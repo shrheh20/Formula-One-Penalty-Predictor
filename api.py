@@ -3,7 +3,7 @@ F1 Component Tracker API
 Simple Flask API to serve penalty predictions
 """
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import pandas as pd
 from component_tracker import F1ComponentTracker
@@ -25,6 +25,11 @@ except Exception as e:
 
 @app.route('/')
 def home():
+    """Serve the public dashboard at the root URL."""
+    return send_from_directory('.', 'dashboard.html')
+
+@app.route('/api')
+def api_home():
     """API documentation endpoint."""
     return jsonify({
         'name': 'F1 Component Tracker API',
