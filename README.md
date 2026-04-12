@@ -1,152 +1,144 @@
-# F1 Intelligence System
+# Formula One Penalty Predictor
 
-**AI-powered F1 race analysis and prediction platform for enthusiasts and betting markets (Kalshi, Polymarket)**
+A public-facing F1 dashboard and API that tracks 2026 power unit usage, flags drivers at risk of grid penalties, and highlights the circuits where taking a penalty is strategically less painful.
 
-## 🎯 What This Does
+This project is built around official FIA race documents and turns them into a simple product:
+- a web dashboard for quick race-weekend scanning
+- a Flask API for structured data access
+- a local FIA-backed dataset that can be refreshed as new documents are published
 
-Combines FIA regulations, broadcast intelligence, social media sentiment, and historical data to predict:
-- **Grid penalties** (Component 1 - LIVE NOW)
-- Mechanical DNF risks
-- Safety car probabilities  
-- Qualifying results
-- Race strategies
-- Team/driver sentiment
+## What It Shows
 
-## 🚀 Quick Start (Component 1: Grid Penalty Predictor)
+- High-risk drivers who are at or near their component allocation limits
+- A component usage overview for the full grid
+- Strategic circuit analysis for penalty timing
+- Driver-level car maps showing where tracked components sit on the car
 
-### Install
+## Data Source
+
+The current dataset is built from official FIA 2026 Formula One World Championship event documents, including Technical Delegate reports covering:
+- power unit elements used per driver
+- new power unit elements introduced for a competition
+
+The repo includes:
+- `fia_2026_component_snapshot.csv`
+- `fia_2026_document_sources.json`
+- `strategic_circuit_rankings_2026.json`
+
+These files power the live dashboard and API responses.
+
+## Tech Stack
+
+- Python
+- Flask
+- Pandas
+- Tailwind CSS (via CDN)
+- Static local image assets for driver photos, team badges, and side-view cars
+
+## Quick Start
+
+### 1. Clone the repo
+
 ```bash
-git clone <your-repo>
-cd F1-PenaltyPredictor
+git clone https://github.com/YOUR-USERNAME/Formula-One-Penalty-Predictor.git
+cd Formula-One-Penalty-Predictor
+```
+
+### 2. Create a virtual environment and install dependencies
+
+```bash
 python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
 ```
 
-### Test
+### 3. Run the test suite
+
 ```bash
 ./.venv/bin/python test_component1.py
 ```
 
-### Run
+### 4. Start the app
+
 ```bash
-# Start API
 ./.venv/bin/python api.py
-
-# Serve the dashboard
-python3 -m http.server 8000
 ```
-Then visit `http://localhost:8000/dashboard.html` while the API is running on `http://localhost:5001`.
 
-## 📊 Component 1: Grid Penalty Predictor
+Then open:
 
-**Status:** ✅ READY TO SHIP
+`http://localhost:5001`
 
-Predicts which drivers will take grid penalties based on:
-- FIA 2026 power unit component usage (ICE, TC, EXH, MGU-K, ES, PU-CE, PU-ANC)
-- Strategic timing analysis (best/worst circuits for penalties)
-- Compounded driver-level risk when multiple components are near or at their allocation limit
+The dashboard is served at the root URL, and the API is served from `/api/...`.
 
-### API Endpoints
+## API Endpoints
+
+```text
+GET /api
+GET /api/health
+GET /api/predictions?race=4
+GET /api/drivers
+GET /api/driver/<code>
+GET /api/circuits
+GET /api/report/<race_number>
+GET /api/betting-insights?race=4
+GET /api/sources
+```
+
+## Project Structure
+
+```text
+Formula-One-Penalty-Predictor/
+├── api.py
+├── component_tracker.py
+├── dashboard.html
+├── test_component1.py
+├── requirements.txt
+├── fia_2026_component_snapshot.csv
+├── fia_2026_document_sources.json
+├── strategic_circuit_rankings_2026.json
+├── circuit_weekend_results_2026.csv
+├── static/
+│   ├── driver-photos/
+│   ├── sidecar/
+│   └── team-badges/
+└── DEPLOYMENT.md
+```
+
+## Local Data Refresh
+
+When new FIA documents are published, update the repo in three parts:
+
+1. Add the new source URLs to `fia_2026_document_sources.json`
+2. Update `fia_2026_component_snapshot.csv` with the latest component counts
+3. Rebuild the circuit rankings if needed:
 
 ```bash
-GET /api/predictions?race=4           # Penalty predictions
-GET /api/drivers                      # All driver component status
-GET /api/driver/HAM                   # Specific driver details
-GET /api/circuits                     # Strategic circuit analysis
-GET /api/betting-insights?race=4      # Betting market insights
-GET /api/report/4?name=Bahrain%20GP   # Full race report
-GET /api/health                       # Health and loaded data status
-GET /api/sources                      # FIA source manifest
+python3 build_strategic_circuits.py
 ```
 
-### Example Output
+Then restart the API.
 
-**High-Risk Driver Alert:**
-```json
-{
-  "driver": "NOR",
-  "penalty_probability": 99.8,
-  "reasons": [
-    "ES limit reached (3/3)",
-    "PU-CE limit reached (3/3)"
-  ],
-  "recommendation": "IMMINENT - Penalty expected this race or next"
-}
-```
+## Deploying Publicly
 
-**Strategic Circuit Advice:**
-```json
-{
-  "circuit": "Monza",
-  "penalty_impact": "LOW",
-  "reason": "Long straights, 3 DRS zones, easy overtaking",
-  "expected_positions_lost": 3
-}
-```
+The simplest public deployment is a single Python web service on Render.
 
-## 📁 Project Structure
+Suggested settings:
+- Build command: `pip install -r requirements.txt`
+- Start command: `python api.py`
 
-```
-F1-PenaltyPredictor/
-├── component_tracker.py          # Core penalty prediction logic
-├── api.py                         # Flask REST API
-├── dashboard.html                 # Web dashboard
-├── fia_2026_component_snapshot.csv # FIA-backed 2026 component snapshot
-├── fia_2026_document_sources.json # Official FIA source manifest
-├── test_component1.py             # Test suite
-├── DEPLOYMENT.md                  # Deployment guide
-└── ROADMAP.md                     # Future components roadmap
-```
+Because the app serves the dashboard from `/`, the public Render URL becomes your shareable product URL.
 
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for a more detailed launch checklist.
 
-## 📊 Data Sources
+## Notes
 
-### Current (Component 1)
-- FIA official 2026 race document pages
-- FIA Technical Delegate reports for PU usage and new PU elements
-- Circuit characteristics database
-- 2026 power unit sporting regulations
+- Driver and team images are stored locally under `static/` for reliability and faster loading.
+- The dashboard is designed to work from the same origin as the Flask API in production.
+- Predictions are based on component usage and documented allocations, not insider information or live telemetry.
 
-### Planned
-- Live timing APIs
-- Team radio transcripts
-- Social media sentiment
-- Weather data
-- Press conference transcripts
-- Multi-language media sources
+## Disclaimer
 
-## 🔧 Development
+This project is for informational and entertainment purposes only. It is not financial advice, betting advice, or an official Formula 1 product.
 
-### Refresh FIA Data
-Update `fia_2026_component_snapshot.csv` and `fia_2026_document_sources.json` when new FIA race documents are published:
+## License
 
-```csv
-Driver,Car_Number,Team,Component_Type,Count,Limit,As_Of_Race,As_Of_Date,Source_Set
-NOR,1,McLaren Mercedes,ES,3,3,Japanese Grand Prix,2026-03-28,australia-china-japan
-```
-
-### Contribute
-1. Fork the repo
-2. Build a new component (see ROADMAP.md)
-3. Submit PR with tests
-
-## 📝 Disclaimer
-
-**Not financial advice.** This tool provides analysis based on publicly available data. 
-Always do your own research before betting. Past prediction accuracy does not guarantee future results.
-
-## 📄 License
-
-MIT License - See LICENSE file
-
-## 🤝 Connect
-
-- Feedback: [Your Contact]
-- Issues: GitHub Issues
-- Twitter: [Your Handle]
-
----
-
-**Built by F1 fans, for F1 fans.** 🏎️💨
-
-Ship fast. Validate predictions. Iterate based on accuracy.
+MIT
