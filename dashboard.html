@@ -11,14 +11,16 @@
         <!-- Header -->
         <div class="bg-gradient-to-r from-red-600 to-red-800 rounded-lg shadow-lg p-6 mb-8">
             <h1 class="text-4xl font-bold text-white mb-2">F1 Grid Penalty Predictor</h1>
-            <p class="text-red-100">Live component usage tracking and penalty predictions from the Flask API</p>
+            <p class="text-red-100">Live component usage tracking and penalty predictions from the predictor API</p>
         </div>
 
         <div class="sticky top-0 z-20 mb-6 rounded-2xl border border-black/5 bg-white/95 px-2 shadow-sm backdrop-blur">
             <div class="flex overflow-x-auto">
                 <button type="button" role="tab" aria-selected="true" data-section-tab="high-risk" onclick="setActiveSection('high-risk')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">High Risk</button>
+                <button type="button" role="tab" aria-selected="false" data-section-tab="live-results" onclick="setActiveSection('live-results')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">FIA Updates</button>
                 <button type="button" role="tab" aria-selected="false" data-section-tab="component-overview" onclick="setActiveSection('component-overview')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">Components</button>
                 <button type="button" role="tab" aria-selected="false" data-section-tab="strategic-circuits" onclick="setActiveSection('strategic-circuits')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">Circuits</button>
+                <button type="button" role="tab" aria-selected="false" data-section-tab="past-races" onclick="setActiveSection('past-races')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">Past Races</button>
             </div>
         </div>
 
@@ -34,6 +36,26 @@
 
                 <div id="highRiskDrivers" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="text-gray-500">Loading live predictions...</div>
+                </div>
+            </section>
+
+            <section id="live-results" role="tabpanel" class="hidden scroll-mt-28 rounded-2xl bg-white p-6 shadow">
+                <h2 class="text-2xl font-bold mb-6">Live Results Intelligence</h2>
+                <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div class="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                        <h3 class="mb-2 text-lg font-semibold text-blue-900">Live steward attention summary</h3>
+                        <p id="stewardSummary" class="text-sm text-blue-800">Loading steward intelligence...</p>
+                    </div>
+                    <div class="rounded-xl border border-purple-200 bg-purple-50 p-4">
+                        <h3 class="mb-2 text-lg font-semibold text-purple-900">Risk delta monitor</h3>
+                        <p id="riskDeltaSummary" class="text-sm text-purple-800">Loading live penalty-risk deltas...</p>
+                    </div>
+                </div>
+                <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <h3 class="mb-3 text-lg font-semibold text-amber-900">Latest steward alerts</h3>
+                    <div id="stewardAlertsList" class="space-y-2 text-sm text-amber-900">
+                        <div class="text-amber-800">Loading latest alerts...</div>
+                    </div>
                 </div>
             </section>
 
@@ -79,6 +101,153 @@
                     </div>
                 </div>
             </section>
+
+            <section id="past-races" role="tabpanel" class="hidden scroll-mt-28 rounded-2xl bg-white p-6 shadow">
+                <div class="mb-6 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="max-w-3xl">
+                        <div id="historicalBadge" class="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+                            <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                            2026 Past Races
+                        </div>
+                        <h2 class="mt-4 text-3xl font-bold text-gray-900">Past races</h2>
+                        <p class="mt-2 text-sm text-gray-600">
+                            Compare 2026 race weekends across practice, qualifying, sprint, and race sessions.
+                        </p>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-3 xl:w-[40rem]">
+                        <label class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
+                            <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Season</span>
+                            <input type="number" value="2026" disabled class="w-full bg-transparent text-2xl font-bold text-gray-900 outline-none">
+                        </label>
+                        <label class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm sm:col-span-2">
+                            <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Circuit</span>
+                            <select id="historicalEventSelect" class="w-full bg-transparent text-2xl font-bold text-gray-900 outline-none">
+                                <option value="">Loading 2026 events...</option>
+                            </select>
+                            <span id="historicalEventMeta" class="mt-2 block text-xs tracking-[0.12em] text-gray-500">Loading schedule...</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                        <div>
+                            <div id="historicalWeekendBadge" class="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-green-700">
+                                <span class="h-2 w-2 rounded-full bg-green-500"></span>
+                                Weekend loading
+                            </div>
+                            <h3 id="historicalEventTitle" class="mt-4 text-3xl font-bold text-gray-900">Choose a 2026 circuit</h3>
+                            <p id="historicalEventSubtitle" class="mt-2 text-sm text-gray-600">Weekend session coverage and historical visuals will load here.</p>
+                        </div>
+                        <div class="mt-6 grid gap-3 md:grid-cols-3">
+                            <div class="min-h-[7rem] rounded-2xl border border-gray-200 bg-white p-4">
+                                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Sessions</div>
+                                <div id="historicalSessionCount" class="mt-2 text-3xl font-bold text-gray-900">--</div>
+                            </div>
+                            <div class="min-h-[7rem] rounded-2xl border border-gray-200 bg-white p-4">
+                                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Weekend format</div>
+                                <div id="historicalEventFormat" class="mt-2 text-2xl font-bold text-gray-900">--</div>
+                            </div>
+                            <div class="min-h-[7rem] rounded-2xl border border-gray-200 bg-white p-4">
+                                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Circuit</div>
+                                <div id="historicalEventLocation" class="mt-2 text-lg font-semibold text-gray-900">--</div>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <div class="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Weekend sessions</div>
+                            <div id="historicalSessionTabs" class="flex flex-wrap gap-3">
+                                <div class="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-500">No sessions loaded yet.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Session focus</div>
+                                <h3 id="historicalFocusTitle" class="mt-2 text-2xl font-bold text-gray-900">Waiting</h3>
+                            </div>
+                            <div id="historicalFocusKind" class="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-gray-600">--</div>
+                        </div>
+                        <div id="historicalFocusSummary" class="mt-5 space-y-4">
+                            <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">
+                                Pick a circuit to explore a session visually.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Session Results</div>
+                                <h3 class="mt-2 text-2xl font-bold text-gray-900">Top finishers</h3>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div id="historicalClassificationFilters"></div>
+                                <div id="historicalClassificationMeta" class="text-xs uppercase tracking-[0.18em] text-gray-500">Waiting</div>
+                            </div>
+                        </div>
+                        <div id="historicalClassificationBars" class="mt-5 space-y-3">
+                            <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">No session selected yet.</div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Timing shape</div>
+                                <h3 class="mt-2 text-2xl font-bold text-gray-900">Lap time Differences</h3>
+                            </div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-gray-500">to fastest</div>
+                        </div>
+                        <div id="historicalTimingBars" class="mt-5 space-y-3">
+                            <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Timing gaps will show here.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid gap-6 xl:grid-cols-3">
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Racecraft</div>
+                                <h3 class="mt-2 text-2xl font-bold text-gray-900">Grid delta</h3>
+                            </div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-gray-500">positions gained</div>
+                        </div>
+                        <div id="historicalGainersChart" class="mt-5 space-y-3">
+                            <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Position-change bars will appear for race-like sessions.</div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Tyre profile</div>
+                                <h3 class="mt-2 text-2xl font-bold text-gray-900">Compound usage</h3>
+                            </div>
+                        </div>
+                        <div id="historicalTyreChart" class="mt-5 space-y-3">
+                            <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Compound distribution will appear for sessions with lap data.</div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Race control</div>
+                                <h3 class="mt-2 text-2xl font-bold text-gray-900">DNF / incidents</h3>
+                            </div>
+                            <div id="historicalIncidentMeta" class="text-xs uppercase tracking-[0.18em] text-gray-500">Waiting</div>
+                        </div>
+                        <div id="historicalIncidentFeed" class="mt-5 space-y-3">
+                            <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Incident and retirement summaries will appear for the selected session.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -87,6 +256,17 @@
         let allDriversData = [];
         let expandedHighRiskCode = null;
         let activeSection = 'high-risk';
+        let liveIntelligenceFeed = null;
+        let liveStewardAlerts = null;
+        const HISTORICAL_YEAR = 2026;
+        const HISTORICAL_REQUEST_TIMEOUT_MS = 30000;
+        const HISTORICAL_CLASSIFICATION_FILTERS = [3, 6, 10, 22];
+        let historicalSchedule = [];
+        let historicalWeekend = null;
+        let historicalActiveSessionKey = null;
+        let historicalActiveClassificationLimit = 10;
+        let historicalRequestId = 0;
+        let historicalAbortController = null;
         const COMPONENT_LAYOUT = {
             'PU-CE': { x: 22, y: 49, labelX: 6, labelY: 42 },
             'ES': { x: 34, y: 42, labelX: 36, labelY: 18 },
@@ -151,7 +331,7 @@
                 tab.classList.toggle('shadow-none', !isActive);
             });
 
-            ['high-risk', 'component-overview', 'strategic-circuits'].forEach(id => {
+            ['high-risk', 'live-results', 'component-overview', 'strategic-circuits', 'past-races'].forEach(id => {
                 const section = document.getElementById(id);
                 if (!section) {
                     return;
@@ -204,11 +384,11 @@
 
         function getApiBaseUrl() {
             if (window.location.protocol === 'file:') {
-                return 'http://localhost:5001';
+                return 'http://localhost:8002';
             }
 
-            if (['localhost', '127.0.0.1'].includes(window.location.hostname) && window.location.port !== '5001') {
-                return `${window.location.protocol}//${window.location.hostname}:5001`;
+            if (['localhost', '127.0.0.1'].includes(window.location.hostname) && window.location.port !== '8002') {
+                return `${window.location.protocol}//${window.location.hostname}:8002`;
             }
 
             return window.location.origin;
@@ -228,18 +408,35 @@
             return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
         }
 
+        function getHistoricalApiBaseUrl() {
+            if (window.location.protocol === 'file:') {
+                return 'http://localhost:8000';
+            }
+
+            if (['localhost', '127.0.0.1'].includes(window.location.hostname) && window.location.port !== '8000') {
+                return `${window.location.protocol}//${window.location.hostname}:8000`;
+            }
+
+            return window.location.origin;
+        }
+
         async function fetchJson(path) {
             const response = await fetch(`${API_BASE_URL}${path}`);
             if (!response.ok) {
                 throw new Error(`Request failed with status ${response.status}`);
             }
 
-            const payload = await response.json();
-            if (!payload.success && !payload.status) {
-                throw new Error(payload.error || 'Unknown API error');
-            }
+            return await response.json();
+        }
 
-            return payload;
+        const HISTORICAL_API_BASE = getHistoricalApiBaseUrl();
+
+        async function safeFetchJson(path) {
+            try {
+                return await fetchJson(path);
+            } catch (error) {
+                return null;
+            }
         }
 
         function setStatusBadge(isHealthy, label) {
@@ -333,6 +530,8 @@
 
             container.innerHTML = highRiskDrivers.map(driver => {
                 const isExpanded = expandedHighRiskCode === driver.driver;
+                const stewardCount = Number(driver.steward_signal_count || 0);
+                const riskDelta = stewardCount > 0 ? Math.min(stewardCount * 5, 20) : 0;
 
                 return `
                 <button type="button" onclick="toggleHighRiskDetail('${driver.driver}')" class="w-full text-left border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
@@ -350,6 +549,11 @@
                         <div class="text-right">
                             <div class="text-3xl font-bold text-red-600">${driver.penalty_probability}%</div>
                             <div class="text-xs text-gray-500">Penalty Risk</div>
+                            ${
+                                riskDelta > 0
+                                    ? `<div class="mt-1 text-xs font-semibold text-purple-700">Live delta +${riskDelta}% (${stewardCount} steward signal${stewardCount > 1 ? 's' : ''})</div>`
+                                    : ''
+                            }
                         </div>
                     </div>
                     <div class="mb-2">
@@ -369,6 +573,36 @@
                 </button>
             `;
             }).join('');
+        }
+
+        function renderIntelligenceCards(feed, alertsPayload) {
+            const stewardSummary = document.getElementById('stewardSummary');
+            const riskDeltaSummary = document.getElementById('riskDeltaSummary');
+            const stewardAlertsList = document.getElementById('stewardAlertsList');
+
+            if (!feed) {
+                stewardSummary.textContent = 'Live FIA intelligence feed unavailable. Showing base component risk only.';
+                riskDeltaSummary.textContent = 'No live delta data yet. Start FIA + predictor services to enable this.';
+            } else {
+                const summary = feed.summary || {};
+                stewardSummary.textContent =
+                    `${summary.drivers_with_steward_attention || 0} driver(s) currently under steward attention from ${summary.fia_signals_count || 0} live FIA signal(s).`;
+                riskDeltaSummary.textContent =
+                    `${summary.predictions_count || 0} predictions enriched with FIA steward context and live risk deltas.`;
+            }
+
+            const alerts = alertsPayload?.alerts || [];
+            if (!alerts.length) {
+                stewardAlertsList.innerHTML = '<div class="text-amber-800">No recent steward alerts detected.</div>';
+                return;
+            }
+
+            stewardAlertsList.innerHTML = alerts.slice(0, 6).map(alert => `
+                <div class="rounded-lg border border-amber-200 bg-white/80 p-3">
+                    <div class="font-semibold">${escapeHtml(alert.title || 'Steward update')}</div>
+                    <div class="text-xs text-gray-600 mt-1">${escapeHtml(alert.message || '')}</div>
+                </div>
+            `).join('');
         }
 
         function populateComponentFilters(drivers) {
@@ -519,7 +753,7 @@
             document.getElementById('highRiskBadge').textContent = 'Load failed';
             document.getElementById('highRiskDrivers').innerHTML = `
                 <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-                    Could not load live data from <code>${API_BASE_URL}</code>. Start the Flask API on port 5001 and refresh.
+                    Could not load live data from <code>${API_BASE_URL}</code>. Start the predictor API on port 8002 and refresh.
                     <div class="mt-2 text-sm text-red-700">${error.message}</div>
                 </div>
             `;
@@ -528,19 +762,478 @@
             document.getElementById('worstCircuits').innerHTML = '';
         }
 
+        function formatHistoricalLapTime(value) {
+            if (!value || value === '--') {
+                return '--';
+            }
+
+            const raw = String(value).trim();
+            const minuteSecondMatch = raw.match(/^(?:(\d+):)?(\d{1,2})\.(\d{3})$/);
+            if (minuteSecondMatch) {
+                const minutes = String(Number(minuteSecondMatch[1] ?? '0')).padStart(2, '0');
+                const seconds = minuteSecondMatch[2].padStart(2, '0');
+                const millis = minuteSecondMatch[3];
+                return `${minutes}:${seconds}:${millis}`;
+            }
+
+            const timedeltaMatch = raw.match(/^(?:(\d+)\s+days?\s+)?(\d+):(\d{2}):(\d{2})\.(\d{3,6})$/);
+            if (timedeltaMatch) {
+                const days = Number(timedeltaMatch[1] || 0);
+                const hours = Number(timedeltaMatch[2] || 0);
+                const minutes = String(days * 24 * 60 + hours * 60 + Number(timedeltaMatch[3] || 0)).padStart(2, '0');
+                const seconds = String(timedeltaMatch[4] || '0').padStart(2, '0');
+                const millis = String(timedeltaMatch[5] || '0').slice(0, 3).padEnd(3, '0');
+                return `${minutes}:${seconds}:${millis}`;
+            }
+
+            return raw;
+        }
+
+        function getHistoricalGapColor(index, total) {
+            if (total <= 1 || index === 0) {
+                return '#16a34a';
+            }
+
+            const ratio = index / (total - 1);
+            const start = { r: 34, g: 197, b: 94 };
+            const end = { r: 239, g: 68, b: 68 };
+            const r = Math.round(start.r + (end.r - start.r) * ratio);
+            const g = Math.round(start.g + (end.g - start.g) * ratio);
+            const b = Math.round(start.b + (end.b - start.b) * ratio);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function getHistoricalTyreMeta(compound) {
+            const normalized = String(compound || '').trim().toUpperCase();
+            const mapping = {
+                SOFT: { color: '#dc2626', image: '/static/tyre-compound/softs.png', label: 'Soft' },
+                MEDIUM: { color: '#eab308', image: '/static/tyre-compound/mediums.png', label: 'Medium' },
+                HARD: {
+                    color: '#ffffff',
+                    image: '/static/tyre-compound/hards.png',
+                    label: 'Hard',
+                    textColor: '#111827',
+                    borderColor: '#6b7280',
+                    trackColor: '#d1d5db',
+                    badgeBackground: '#f3f4f6'
+                },
+                INTERMEDIATE: { color: '#16a34a', image: '/static/tyre-compound/inters.png', label: 'Intermediate' },
+                WET: { color: '#1d4ed8', image: '/static/tyre-compound/wets.png', label: 'Wet' },
+            };
+
+            return mapping[normalized] || { color: '#9ca3af', image: '', label: compound || '--', trackColor: '#e5e7eb' };
+        }
+
+        async function fetchHistoricalJson(path, options = {}) {
+            const response = await fetch(`${HISTORICAL_API_BASE}${path}`, options);
+            if (!response.ok) {
+                throw new Error(`Historical request failed with status ${response.status}`);
+            }
+            return await response.json();
+        }
+
+        function renderHistoricalWeekendHeader(weekend) {
+            document.getElementById('historicalWeekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-green-500"></span>Historical weekend loaded';
+            document.getElementById('historicalEventTitle').textContent = weekend.official_event_name || weekend.event_name;
+            document.getElementById('historicalEventSubtitle').textContent = `${weekend.location || ''}${weekend.country ? `, ${weekend.country}` : ''}` || '2026 event loaded';
+            document.getElementById('historicalSessionCount').textContent = weekend.sessions.length;
+            document.getElementById('historicalEventFormat').textContent = (weekend.event_format || '--').replaceAll('_', ' ');
+            document.getElementById('historicalEventLocation').textContent = weekend.location || weekend.country || '--';
+        }
+
+        function renderHistoricalSessionTabs(weekend) {
+            const container = document.getElementById('historicalSessionTabs');
+            container.innerHTML = weekend.sessions.map(session => {
+                const active = session.session_key === historicalActiveSessionKey;
+                return `
+                    <button
+                        data-historical-session-key="${escapeHtml(session.session_key)}"
+                        class="historical-session-tab min-w-fit rounded-xl border px-4 py-2 text-sm font-semibold uppercase tracking-[0.16em] transition ${
+                            active
+                                ? 'border-red-200 bg-red-50 text-red-700'
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-red-200 hover:bg-red-50 hover:text-red-600'
+                        }"
+                    >
+                        ${escapeHtml(session.session_name)}
+                    </button>
+                `;
+            }).join('');
+
+            container.querySelectorAll('.historical-session-tab').forEach(button => {
+                button.addEventListener('click', () => {
+                    historicalActiveSessionKey = button.dataset.historicalSessionKey;
+                    renderHistoricalFocusedSession();
+                });
+            });
+        }
+
+        function getHistoricalFocusedSession() {
+            if (!historicalWeekend) {
+                return null;
+            }
+            return historicalWeekend.sessions.find(session => session.session_key === historicalActiveSessionKey) || historicalWeekend.sessions[0] || null;
+        }
+
+        function renderHistoricalFocusSummary(session) {
+            const container = document.getElementById('historicalFocusSummary');
+            document.getElementById('historicalFocusTitle').textContent = session.session_name;
+            document.getElementById('historicalFocusKind').textContent = session.is_race_like
+                ? 'Race-like'
+                : session.is_qualifying_like
+                    ? 'Qualifying-like'
+                    : 'Practice';
+
+            const fastest = session.fastest_lap;
+            container.innerHTML = `
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="min-h-[8rem] rounded-2xl border border-gray-200 bg-white p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Fastest</div>
+                        <div class="mt-2 text-xl font-bold text-gray-900">${escapeHtml(fastest?.full_name || '--')}</div>
+                        <div class="mt-1 text-sm text-gray-500">${escapeHtml(formatHistoricalLapTime(fastest?.lap_time || '--'))}</div>
+                    </div>
+                    <div class="min-h-[8rem] rounded-2xl border border-gray-200 bg-white p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Lap count</div>
+                        <div class="mt-2 text-4xl font-bold text-gray-900">${session.lap_count ?? '--'}</div>
+                    </div>
+                    <div class="min-h-[8rem] rounded-2xl border border-gray-200 bg-white p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Track temp avg</div>
+                        <div class="mt-2 text-lg font-semibold text-gray-900">${session.weather.track_temp_avg ? `${session.weather.track_temp_avg}°` : '--'}</div>
+                    </div>
+                    <div class="min-h-[8rem] rounded-2xl border border-gray-200 bg-white p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Rain seen</div>
+                        <div class="mt-2 text-lg font-semibold text-gray-900">${session.weather.rainfall_seen ? 'Yes' : 'No'}</div>
+                    </div>
+                    <div class="min-h-[8rem] rounded-2xl border border-gray-200 bg-white p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Air temp avg</div>
+                        <div class="mt-2 text-lg font-semibold text-gray-900">${session.weather.air_temp_avg ? `${session.weather.air_temp_avg}°` : '--'}</div>
+                    </div>
+                    <div class="min-h-[8rem] rounded-2xl border border-gray-200 bg-white p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Humidity avg</div>
+                        <div class="mt-2 text-lg font-semibold text-gray-900">${session.weather.humidity_avg ? `${session.weather.humidity_avg}%` : '--'}</div>
+                    </div>
+                </div>
+                ${session.load_error ? `
+                    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                        FastF1 only partially loaded this session. Visuals below may be incomplete.
+                        <div class="mt-2 text-xs uppercase tracking-[0.14em] text-amber-700">${escapeHtml(session.load_error)}</div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function getHistoricalVisibleClassificationRows(session) {
+            const limit = Math.min(historicalActiveClassificationLimit, session.classification.length);
+            return session.classification.slice(0, limit);
+        }
+
+        function renderHistoricalClassificationFilters(session) {
+            const container = document.getElementById('historicalClassificationFilters');
+            const maxAvailable = session.classification.length;
+            const availableFilters = HISTORICAL_CLASSIFICATION_FILTERS.filter(limit => limit <= maxAvailable || limit === 22);
+            const currentValue = availableFilters.includes(historicalActiveClassificationLimit)
+                ? historicalActiveClassificationLimit
+                : availableFilters[availableFilters.length - 1];
+
+            historicalActiveClassificationLimit = currentValue || historicalActiveClassificationLimit;
+            container.innerHTML = `
+                <label class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                    <span>Show</span>
+                    <select
+                        id="historicalClassificationFilterSelect"
+                        class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-700 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                    >
+                        ${availableFilters.map(limit => `
+                            <option value="${limit}" ${limit === currentValue ? 'selected' : ''}>
+                                ${limit === 22 ? `All ${maxAvailable}` : `Top ${limit}`}
+                            </option>
+                        `).join('')}
+                    </select>
+                </label>
+            `;
+
+            const select = document.getElementById('historicalClassificationFilterSelect');
+            if (select) {
+                select.addEventListener('change', () => {
+                    historicalActiveClassificationLimit = Number(select.value);
+                    renderHistoricalClassification(session);
+                    renderHistoricalTimingBars(session);
+                });
+            }
+        }
+
+        function renderHistoricalClassification(session) {
+            const container = document.getElementById('historicalClassificationBars');
+            renderHistoricalClassificationFilters(session);
+            const visibleRows = getHistoricalVisibleClassificationRows(session);
+            document.getElementById('historicalClassificationMeta').textContent = `${visibleRows.length} of ${session.classification.length} shown`;
+            const sessionFastest = session.fastest_lap?.lap_time || null;
+
+            if (!session.classification.length) {
+                container.innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">No classification data for this session.</div>';
+                return;
+            }
+
+            container.innerHTML = visibleRows.map((entry, index) => `
+                <div class="rounded-2xl border border-gray-200 bg-white p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl ${index === 0 ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-900'} text-xl font-bold">${entry.position}</div>
+                            <div>
+                                <div class="font-semibold text-gray-900">${escapeHtml(entry.full_name || entry.driver)}</div>
+                                <div class="text-xs tracking-[0.12em] text-gray-500">${escapeHtml(entry.driver || '--')}${entry.team ? ` · ${escapeHtml(entry.team)}` : ''}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-semibold ${entry.fastest_lap_time && sessionFastest && entry.fastest_lap_time === sessionFastest ? 'text-violet-600' : 'text-gray-700'}">${escapeHtml(formatHistoricalLapTime(entry.fastest_lap_time || entry.time || '--'))}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderHistoricalTimingBars(session) {
+            const container = document.getElementById('historicalTimingBars');
+            const visibleDrivers = new Set(getHistoricalVisibleClassificationRows(session).map(entry => entry.driver));
+            const filteredBars = (session.timing_bars || [])
+                .filter(item => visibleDrivers.has(item.driver))
+                .sort((left, right) => left.gap_seconds - right.gap_seconds);
+
+            if (!filteredBars.length) {
+                container.innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Timing gaps are not available for this session.</div>';
+                return;
+            }
+
+            const maxGap = Math.max(...filteredBars.map(item => item.gap_seconds), 0.001);
+            container.innerHTML = filteredBars.map((item, index) => {
+                const barColor = getHistoricalGapColor(index, filteredBars.length);
+                const isFastest = index === 0;
+                return `
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="font-semibold text-gray-900">${escapeHtml(item.full_name)}</div>
+                        <div class="${isFastest ? 'font-semibold text-green-700' : 'text-gray-500'}">+${item.gap_seconds.toFixed(3)}s</div>
+                    </div>
+                    <div class="h-3 overflow-hidden rounded-full bg-gray-200">
+                        <div class="h-full rounded-full" style="background:${barColor}; width:${Math.max(8, (item.gap_seconds / maxGap) * 100)}%"></div>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        function renderHistoricalGainers(session) {
+            const container = document.getElementById('historicalGainersChart');
+            if (!session.top_gainers.length) {
+                container.innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Grid delta is most useful for race or sprint sessions with grid and finish positions.</div>';
+                return;
+            }
+
+            const maxDelta = Math.max(...session.top_gainers.map(item => Math.abs(item.delta)), 1);
+            container.innerHTML = session.top_gainers.map(item => `
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="font-semibold text-gray-900">${escapeHtml(item.full_name)}</div>
+                        <div class="${item.delta >= 0 ? 'text-green-700' : 'text-red-600'}">${item.delta >= 0 ? '+' : ''}${item.delta}</div>
+                    </div>
+                    <div class="h-3 overflow-hidden rounded-full bg-gray-200">
+                        <div class="h-full rounded-full ${item.delta >= 0 ? 'bg-green-500' : 'bg-red-500'}" style="width:${Math.max(8, (Math.abs(item.delta) / maxDelta) * 100)}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderHistoricalTyres(session) {
+            const container = document.getElementById('historicalTyreChart');
+            if (!session.tyre_usage.length) {
+                container.innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">No tyre usage data is available for this session.</div>';
+                return;
+            }
+
+            const maxLaps = Math.max(...session.tyre_usage.map(item => item.laps), 1);
+            container.innerHTML = session.tyre_usage.map(item => {
+                const tyreMeta = getHistoricalTyreMeta(item.compound);
+                const textColorClass = tyreMeta.textColor ? '' : 'text-gray-900';
+                const trackColor = tyreMeta.trackColor || '#e5e7eb';
+                const badgeBackground = tyreMeta.badgeBackground || '#ffffff';
+                const compoundBorder = tyreMeta.borderColor || tyreMeta.color;
+                return `
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-3">
+                            ${tyreMeta.image ? `
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full p-1 shadow-sm" style="border: 2px solid ${compoundBorder}; background:${badgeBackground};">
+                                    <img src="${getAssetUrl(tyreMeta.image)}" alt="${escapeHtml(tyreMeta.label)}" class="h-full w-full object-contain" loading="lazy" decoding="async">
+                                </div>
+                            ` : ''}
+                            <div class="font-semibold ${textColorClass}" style="${tyreMeta.textColor ? `color:${tyreMeta.textColor};` : ''}">${escapeHtml(tyreMeta.label)}</div>
+                        </div>
+                        <div class="text-gray-500">${item.laps} laps</div>
+                    </div>
+                    <div class="h-3 overflow-hidden rounded-full" style="background:${trackColor};">
+                        <div class="h-full rounded-full" style="background:${tyreMeta.color}; width:${Math.max(8, (item.laps / maxLaps) * 100)}%; ${tyreMeta.borderColor ? `box-shadow: inset 0 0 0 1px ${tyreMeta.borderColor};` : ''}"></div>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        function renderHistoricalIncidents(session) {
+            const container = document.getElementById('historicalIncidentFeed');
+            const meta = document.getElementById('historicalIncidentMeta');
+            const incidents = session.incidents || { dnf_count: 0, incident_count: 0, items: [] };
+            meta.textContent = `${incidents.dnf_count || 0} DNFs · ${incidents.incident_count || 0} incidents`;
+
+            if (!incidents.items?.length) {
+                container.innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">No DNF or incident messages were detected for this session.</div>';
+                return;
+            }
+
+            container.innerHTML = incidents.items.map(item => `
+                <div class="rounded-2xl border border-gray-200 bg-white p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.16em] ${item.type === 'dnf' ? 'text-red-600' : 'text-gray-500'}">${escapeHtml(String(item.type || 'incident').replaceAll('_', ' '))}</div>
+                            <div class="mt-2 font-semibold text-gray-900">${escapeHtml(item.driver || 'Race control')}</div>
+                            <div class="mt-1 text-sm text-gray-500">${escapeHtml(item.detail || '--')}</div>
+                            <div class="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.12em]">
+                                ${item.subtype ? `<span class="rounded-full bg-gray-100 px-2 py-1 text-gray-700">Subtype: ${escapeHtml(String(item.subtype).replaceAll('_', ' '))}</span>` : ''}
+                                ${item.control_state ? `<span class="rounded-full bg-amber-50 px-2 py-1 text-amber-700">Control: ${escapeHtml(item.control_state)}</span>` : ''}
+                                ${item.classification_outcome ? `<span class="rounded-full bg-red-50 px-2 py-1 text-red-700">Outcome: ${escapeHtml(item.classification_outcome)}</span>` : ''}
+                                ${item.session_time ? `<span class="rounded-full bg-blue-50 px-2 py-1 text-blue-700">Time: ${escapeHtml(item.session_time)}</span>` : ''}
+                            </div>
+                            <div class="mt-3 grid gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3 text-[11px] text-gray-600 sm:grid-cols-2">
+                                ${item.raw_category ? `<div><span class="font-semibold text-gray-800">Category:</span> ${escapeHtml(item.raw_category)}</div>` : ''}
+                                ${item.raw_flag ? `<div><span class="font-semibold text-gray-800">Flag:</span> ${escapeHtml(item.raw_flag)}</div>` : ''}
+                                ${item.raw_scope ? `<div><span class="font-semibold text-gray-800">Scope:</span> ${escapeHtml(item.raw_scope)}</div>` : ''}
+                                ${item.raw_status ? `<div><span class="font-semibold text-gray-800">Status:</span> ${escapeHtml(item.raw_status)}</div>` : ''}
+                                ${item.raw_sector ? `<div><span class="font-semibold text-gray-800">Sector:</span> ${escapeHtml(item.raw_sector)}</div>` : ''}
+                                ${item.lap ? `<div><span class="font-semibold text-gray-800">Lap:</span> ${escapeHtml(item.lap)}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="text-xs uppercase tracking-[0.16em] text-gray-500">${item.lap ? `Lap ${item.lap}` : '--'}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderHistoricalFocusedSession() {
+            const session = getHistoricalFocusedSession();
+            if (!session) {
+                return;
+            }
+
+            renderHistoricalSessionTabs(historicalWeekend);
+            renderHistoricalFocusSummary(session);
+            renderHistoricalClassification(session);
+            renderHistoricalTimingBars(session);
+            renderHistoricalGainers(session);
+            renderHistoricalTyres(session);
+            renderHistoricalIncidents(session);
+        }
+
+        async function loadHistoricalSchedule() {
+            const select = document.getElementById('historicalEventSelect');
+            const meta = document.getElementById('historicalEventMeta');
+            try {
+                const payload = await fetchHistoricalJson(`/api/v2/reference/events?year=${HISTORICAL_YEAR}`);
+                historicalSchedule = payload.events || [];
+
+                if (!historicalSchedule.length) {
+                    select.innerHTML = '<option value="">No 2026 events found</option>';
+                    meta.textContent = 'FastF1 did not return a 2026 schedule.';
+                    return;
+                }
+
+                select.innerHTML = historicalSchedule.map(event => `
+                    <option value="${escapeHtml(event.event_name)}">${escapeHtml(event.event_name)}</option>
+                `).join('');
+                meta.textContent = '2026 schedule loaded from FastF1.';
+            } catch (error) {
+                historicalSchedule = [];
+                select.innerHTML = '<option value="">Backend unavailable</option>';
+                meta.textContent = `Could not reach FastAPI at ${HISTORICAL_API_BASE}. Start the backend on port 8000.`;
+                document.getElementById('historicalWeekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-red-500"></span>Backend offline';
+                document.getElementById('historicalEventTitle').textContent = 'Historical backend unavailable';
+                document.getElementById('historicalEventSubtitle').textContent = 'The past races tab needs the FastAPI server running on port 8000 before it can load 2026 events.';
+            }
+        }
+
+        async function loadHistoricalWeekend() {
+            const requestId = ++historicalRequestId;
+            const gpName = document.getElementById('historicalEventSelect').value;
+            if (!gpName) {
+                return;
+            }
+
+            if (historicalAbortController) {
+                historicalAbortController.abort();
+            }
+            historicalAbortController = new AbortController();
+            const timeoutId = setTimeout(() => historicalAbortController.abort('timeout'), HISTORICAL_REQUEST_TIMEOUT_MS);
+
+            document.getElementById('historicalWeekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-amber-500"></span>Loading weekend';
+
+            try {
+                const payload = await fetchHistoricalJson(
+                    `/api/v2/history/weekend?year=${HISTORICAL_YEAR}&gp_name=${encodeURIComponent(gpName)}`,
+                    { signal: historicalAbortController.signal }
+                );
+                if (requestId !== historicalRequestId) {
+                    return;
+                }
+
+                historicalWeekend = payload;
+                historicalActiveSessionKey = payload.sessions.find(session => session.session_key === 'R')?.session_key || payload.sessions[0]?.session_key || null;
+                historicalActiveClassificationLimit = 10;
+                renderHistoricalWeekendHeader(payload);
+                renderHistoricalFocusedSession();
+
+                const selectedEvent = historicalSchedule.find(event => event.event_name === gpName);
+                document.getElementById('historicalEventMeta').textContent = selectedEvent
+                    ? [selectedEvent.location, selectedEvent.country].filter(Boolean).join(', ')
+                    : '2026 event';
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    document.getElementById('historicalWeekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-red-500"></span>Load timed out';
+                    document.getElementById('historicalEventTitle').textContent = 'Weekend load timed out';
+                    document.getElementById('historicalEventSubtitle').textContent = 'FastF1 took too long for this circuit. Try refreshing or choose another session after partial data loads.';
+                    return;
+                }
+                document.getElementById('historicalWeekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-red-500"></span>Load failed';
+                document.getElementById('historicalEventTitle').textContent = 'Weekend load failed';
+                document.getElementById('historicalEventSubtitle').textContent = error.message;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        function wireHistoricalExplorer() {
+            const select = document.getElementById('historicalEventSelect');
+            if (!select) {
+                return;
+            }
+            select.addEventListener('change', loadHistoricalWeekend);
+        }
+
         async function loadDashboard() {
             try {
-                const [health, predictions, drivers, circuits] = await Promise.all([
+                const [health, drivers, circuits, fallbackPredictions, intelligenceFeed, stewardAlerts] = await Promise.all([
                     fetchJson('/api/health'),
-                    fetchJson(`/api/predictions?race=${DEFAULT_RACE_NUMBER}`),
                     fetchJson('/api/drivers'),
-                    fetchJson('/api/circuits')
+                    fetchJson('/api/circuits'),
+                    fetchJson(`/api/predictions?race=${DEFAULT_RACE_NUMBER}`),
+                    safeFetchJson(`/api/v2/intelligence/predictor-feed?race_number=${DEFAULT_RACE_NUMBER}&limit=100`),
+                    safeFetchJson('/api/v2/intelligence/steward-alerts?limit=8')
                 ]);
 
                 setStatusBadge(true, 'API healthy');
                 allDriversData = drivers.drivers;
+                liveIntelligenceFeed = intelligenceFeed;
+                liveStewardAlerts = stewardAlerts;
                 populateComponentFilters(allDriversData);
-                renderHighRiskDrivers(predictions.predictions);
+                const predictions = intelligenceFeed?.predictions?.length ? intelligenceFeed.predictions : fallbackPredictions.predictions;
+                renderIntelligenceCards(intelligenceFeed, stewardAlerts);
+                renderHighRiskDrivers(predictions);
                 renderComponentGrid(allDriversData);
                 renderCircuits(circuits.circuits);
             } catch (error) {
@@ -548,10 +1241,13 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             setActiveSection(activeSection);
             wireComponentFilters();
+            wireHistoricalExplorer();
             loadDashboard();
+            await loadHistoricalSchedule();
+            await loadHistoricalWeekend();
         });
     </script>
 </body>

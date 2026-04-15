@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 2026 Weekend Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Rajdhani', 'sans-serif'],
+                        body: ['Inter', 'sans-serif']
+                    },
+                    colors: {
+                        paddock: {
+                            red: '#E10600',
+                            slate: '#171B23',
+                            steel: '#7C8799',
+                            mint: '#54E0B5',
+                            gold: '#F6C453'
+                        }
+                    },
+                    boxShadow: {
+                        panel: '0 24px 60px rgba(12, 15, 20, 0.22)'
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="min-h-screen bg-[#0a0c11] font-body text-white">
+    <div class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(225,6,0,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(84,224,181,0.12),_transparent_22%),linear-gradient(180deg,_#151922_0%,_#090b10_100%)]">
+        <main class="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-6 lg:px-8">
+            <header class="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-panel backdrop-blur">
+                <div class="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="max-w-3xl">
+                        <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white/75">
+                            <span class="h-2 w-2 rounded-full bg-paddock-mint"></span>
+                            2026 historical explorer
+                        </div>
+                        <h1 class="font-display text-4xl font-bold uppercase tracking-[0.06em] text-white sm:text-5xl">FastF1 weekend atlas</h1>
+                        <p class="mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
+                            Historical 2026 weekend data only. Pick a circuit and compare race, qualifying, sprint, sprint qualifying, and free practice sessions through compact visuals instead of text-heavy reports.
+                        </p>
+                    </div>
+
+                    <div class="grid gap-3 sm:grid-cols-3 xl:w-[36rem]">
+                        <label class="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
+                            <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Season</span>
+                            <input type="number" value="2026" disabled class="w-full bg-transparent font-display text-2xl font-semibold text-white outline-none opacity-90">
+                        </label>
+                        <label class="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm sm:col-span-2">
+                            <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Circuit</span>
+                            <select id="eventSelect" class="w-full bg-transparent font-display text-2xl font-semibold text-white outline-none">
+                                <option class="text-black" value="">Loading 2026 events...</option>
+                            </select>
+                            <span id="eventMeta" class="mt-2 block text-xs tracking-[0.12em] text-slate-500">Loading schedule...</span>
+                        </label>
+                    </div>
+                </div>
+            </header>
+
+            <section class="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(25rem,0.95fr)]">
+                <div class="rounded-[2rem] border border-white/10 bg-[#12161d]/90 p-6 shadow-panel">
+                    <div class="flex flex-col gap-6">
+                        <div>
+                            <div id="weekendBadge" class="inline-flex items-center gap-2 rounded-full border border-paddock-mint/25 bg-paddock-mint/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-paddock-mint">
+                                <span class="h-2 w-2 rounded-full bg-paddock-mint"></span>
+                                Weekend loading
+                            </div>
+                            <h2 id="eventTitle" class="mt-4 font-display text-3xl font-bold uppercase tracking-[0.04em] text-white">Choose a 2026 circuit</h2>
+                            <p id="eventSubtitle" class="mt-2 text-sm text-slate-400">Session coverage and visual summaries will load here.</p>
+                        </div>
+
+                        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                            <div class="min-h-[7.5rem] rounded-2xl border border-white/10 bg-black/20 p-4">
+                                <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Sessions</div>
+                                <div id="sessionCount" class="mt-2 font-display text-3xl font-bold text-white">--</div>
+                            </div>
+                            <div class="min-h-[7.5rem] rounded-2xl border border-white/10 bg-black/20 p-4">
+                                <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Weekend format</div>
+                                <div id="eventFormat" class="mt-2 text-2xl font-semibold text-white">--</div>
+                            </div>
+                            <div class="min-h-[7.5rem] rounded-2xl border border-white/10 bg-black/20 p-4">
+                                <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Circuit</div>
+                                <div id="eventLocation" class="mt-2 text-lg font-semibold text-white">--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <div class="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Weekend sessions</div>
+                        <div id="sessionTabs" class="flex flex-wrap gap-3">
+                            <div class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-400">No sessions loaded yet.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-[2rem] border border-white/10 bg-[#12161d]/90 p-6 shadow-panel">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Session focus</div>
+                            <h2 id="focusTitle" class="mt-2 font-display text-2xl font-bold uppercase tracking-[0.04em] text-white">Waiting</h2>
+                        </div>
+                        <div id="focusKind" class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">--</div>
+                    </div>
+                    <div id="focusSummary" class="mt-5 space-y-4">
+                        <div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">
+                            Pick a circuit to explore a session visually.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+                <div class="rounded-[2rem] border border-white/10 bg-[#12161d]/90 p-6 shadow-panel">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Classification</div>
+                            <h2 class="mt-2 font-display text-2xl font-bold uppercase tracking-[0.04em] text-white">Top finishers</h2>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div id="classificationFilters" class="flex flex-wrap gap-2">
+                                <button class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Top 10</button>
+                            </div>
+                            <div id="classificationMeta" class="text-xs uppercase tracking-[0.18em] text-slate-500">Waiting</div>
+                        </div>
+                    </div>
+                    <div id="classificationBars" class="mt-5 space-y-3">
+                        <div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">No session selected yet.</div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="rounded-[2rem] border border-white/10 bg-[#12161d]/90 p-6 shadow-panel">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Timing shape</div>
+                                <h2 class="mt-2 font-display text-2xl font-bold uppercase tracking-[0.04em] text-white">Gap bars</h2>
+                            </div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-slate-500">to fastest</div>
+                        </div>
+                        <div id="timingBars" class="mt-5 space-y-3">
+                            <div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">Timing gaps will show here.</div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section class="grid gap-6 xl:grid-cols-3">
+                <div class="rounded-[2rem] border border-white/10 bg-[#12161d]/90 p-6 shadow-panel">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Racecraft</div>
+                            <h2 class="mt-2 font-display text-2xl font-bold uppercase tracking-[0.04em] text-white">Grid delta</h2>
+                        </div>
+                        <div class="text-xs uppercase tracking-[0.18em] text-slate-500">positions gained</div>
+                    </div>
+                    <div id="gainersChart" class="mt-5 space-y-3">
+                        <div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">Position-change bars will appear for race-like sessions.</div>
+                    </div>
+                </div>
+
+                <div class="rounded-[2rem] border border-white/10 bg-[#12161d]/90 p-6 shadow-panel">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Tyre profile</div>
+                            <h2 class="mt-2 font-display text-2xl font-bold uppercase tracking-[0.04em] text-white">Compound usage</h2>
+                        </div>
+                        <div class="text-xs uppercase tracking-[0.18em] text-slate-500">laps by compound</div>
+                    </div>
+                    <div id="tyreChart" class="mt-5 space-y-3">
+                        <div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">Compound distribution will appear for sessions with lap data.</div>
+                    </div>
+                </div>
+
+                <div class="rounded-[2rem] border border-white/10 bg-[#12161d]/90 p-6 shadow-panel">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Race control</div>
+                            <h2 class="mt-2 font-display text-2xl font-bold uppercase tracking-[0.04em] text-white">DNF / incidents</h2>
+                        </div>
+                        <div id="incidentMeta" class="text-xs uppercase tracking-[0.18em] text-slate-500">Waiting</div>
+                    </div>
+                    <div id="incidentFeed" class="mt-5 space-y-3">
+                        <div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">Incident and retirement summaries will appear for race-like sessions.</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const FASTAPI_BASE = `${window.location.protocol}//${window.location.hostname}:8000`;
+        const TARGET_YEAR = 2026;
+        const WEEKEND_REQUEST_TIMEOUT_MS = 30000;
+        const CLASSIFICATION_FILTERS = [3, 6, 10, 22];
+        let latestSchedule = [];
+        let latestWeekend = null;
+        let activeSessionKey = null;
+        let activeClassificationLimit = 10;
+        let currentRequestId = 0;
+        let weekendAbortController = null;
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function formatTime(value) {
+            if (!value) {
+                return '--';
+            }
+            return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatLapTime(value) {
+            if (!value || value === '--') {
+                return '--';
+            }
+
+            const raw = String(value).trim();
+            const minuteSecondMatch = raw.match(/^(?:(\d+):)?(\d{1,2})\.(\d{3})$/);
+            if (minuteSecondMatch) {
+                const minutes = String(Number(minuteSecondMatch[1] ?? '0')).padStart(2, '0');
+                const seconds = minuteSecondMatch[2].padStart(2, '0');
+                const millis = minuteSecondMatch[3];
+                return `${minutes}:${seconds}:${millis}`;
+            }
+
+            const timedeltaMatch = raw.match(/^(?:(\d+)\s+days?\s+)?(\d+):(\d{2}):(\d{2})\.(\d{3,6})$/);
+            if (timedeltaMatch) {
+                const days = Number(timedeltaMatch[1] || 0);
+                const hours = Number(timedeltaMatch[2] || 0);
+                const minutes = String(days * 24 * 60 + hours * 60 + Number(timedeltaMatch[3] || 0)).padStart(2, '0');
+                const seconds = String(timedeltaMatch[4] || '0').padStart(2, '0');
+                const millis = String(timedeltaMatch[5] || '0').slice(0, 3).padEnd(3, '0');
+                return `${minutes}:${seconds}:${millis}`;
+            }
+
+            return raw;
+        }
+
+        function renderWeekendHeader(weekend) {
+            document.getElementById('weekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-paddock-mint"></span>Historical weekend loaded';
+            document.getElementById('eventTitle').textContent = weekend.official_event_name || weekend.event_name;
+            document.getElementById('eventSubtitle').textContent = `${weekend.location || ''}${weekend.country ? `, ${weekend.country}` : ''}` || '2026 event loaded';
+            document.getElementById('sessionCount').textContent = weekend.sessions.length;
+            document.getElementById('eventFormat').textContent = (weekend.event_format || '--').replaceAll('_', ' ');
+            document.getElementById('eventLocation').textContent = weekend.location || weekend.country || '--';
+        }
+
+        function renderSessionTabs(weekend) {
+            const container = document.getElementById('sessionTabs');
+            container.innerHTML = weekend.sessions.map(session => {
+                const active = session.session_key === activeSessionKey;
+                return `
+                    <button data-session-key="${escapeHtml(session.session_key)}" class="session-tab whitespace-nowrap rounded-full border px-5 py-3 text-center text-[13px] font-semibold uppercase tracking-[0.16em] leading-none sm:text-sm ${
+                        active
+                            ? 'border-paddock-mint/35 bg-paddock-mint/10 text-paddock-mint'
+                            : 'border-white/10 bg-white/5 text-slate-300'
+                    }">
+                        ${escapeHtml(session.session_name)}
+                    </button>
+                `;
+            }).join('');
+
+            container.querySelectorAll('.session-tab').forEach(button => {
+                button.addEventListener('click', () => {
+                    activeSessionKey = button.dataset.sessionKey;
+                    renderFocusedSession();
+                });
+            });
+        }
+
+        function getFocusedSession() {
+            if (!latestWeekend) {
+                return null;
+            }
+            return latestWeekend.sessions.find(session => session.session_key === activeSessionKey) || latestWeekend.sessions[0] || null;
+        }
+
+        function renderFocusSummary(session) {
+            const container = document.getElementById('focusSummary');
+            document.getElementById('focusTitle').textContent = session.session_name;
+            document.getElementById('focusKind').textContent = session.is_race_like
+                ? 'Race-like'
+                : session.is_qualifying_like
+                    ? 'Qualifying-like'
+                    : 'Practice';
+
+            const fastest = session.fastest_lap;
+            container.innerHTML = `
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="min-h-[8rem] rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Fastest</div>
+                        <div class="mt-2 text-lg font-semibold text-white">${escapeHtml(fastest?.full_name || '--')}</div>
+                        <div class="mt-1 text-sm text-slate-400">${escapeHtml(formatLapTime(fastest?.lap_time || '--'))}</div>
+                    </div>
+                    <div class="min-h-[8rem] rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Lap count</div>
+                        <div class="mt-2 font-display text-3xl font-bold text-white">${session.lap_count ?? '--'}</div>
+                    </div>
+                    <div class="min-h-[8rem] rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Track temp avg</div>
+                        <div class="mt-2 text-lg font-semibold text-white">${session.weather.track_temp_avg ? `${session.weather.track_temp_avg}°` : '--'}</div>
+                    </div>
+                    <div class="min-h-[8rem] rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Rain seen</div>
+                        <div class="mt-2 text-lg font-semibold text-white">${session.weather.rainfall_seen ? 'Yes' : 'No'}</div>
+                    </div>
+                    <div class="min-h-[8rem] rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Air temp avg</div>
+                        <div class="mt-2 text-lg font-semibold text-white">${session.weather.air_temp_avg ? `${session.weather.air_temp_avg}°` : '--'}</div>
+                    </div>
+                    <div class="min-h-[8rem] rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <div class="text-xs uppercase tracking-[0.18em] text-slate-500">Humidity avg</div>
+                        <div class="mt-2 text-lg font-semibold text-white">${session.weather.humidity_avg ? `${session.weather.humidity_avg}%` : '--'}</div>
+                    </div>
+                </div>
+                ${session.load_error ? `
+                    <div class="rounded-2xl border border-paddock-gold/30 bg-paddock-gold/10 p-4 text-sm text-amber-100">
+                        FastF1 only partially loaded this session. Visuals below may be incomplete.
+                        <div class="mt-2 text-xs uppercase tracking-[0.14em] text-amber-200/80">${escapeHtml(session.load_error)}</div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function getVisibleClassificationRows(session) {
+            const limit = Math.min(activeClassificationLimit, session.classification.length);
+            return session.classification.slice(0, limit);
+        }
+
+        function renderClassificationFilters(session) {
+            const container = document.getElementById('classificationFilters');
+            const maxAvailable = session.classification.length;
+            const availableFilters = CLASSIFICATION_FILTERS.filter(limit => limit <= maxAvailable || limit === 22);
+            const currentValue = availableFilters.includes(activeClassificationLimit)
+                ? activeClassificationLimit
+                : availableFilters[availableFilters.length - 1];
+
+            activeClassificationLimit = currentValue || activeClassificationLimit;
+            container.innerHTML = `
+                <label class="flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-slate-500">
+                    <span>Show</span>
+                    <select
+                        id="classificationFilterSelect"
+                        class="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200 outline-none transition focus:border-paddock-mint/40"
+                    >
+                        ${availableFilters.map(limit => `
+                            <option value="${limit}" ${limit === currentValue ? 'selected' : ''}>
+                                ${limit === 22 ? `All ${maxAvailable}` : `Top ${limit}`}
+                            </option>
+                        `).join('')}
+                    </select>
+                </label>
+            `;
+
+            const select = document.getElementById('classificationFilterSelect');
+            if (select) {
+                select.addEventListener('change', () => {
+                    activeClassificationLimit = Number(select.value);
+                    renderClassification(session);
+                    renderTimingBars(session);
+                });
+            }
+        }
+
+        function renderClassification(session) {
+            const container = document.getElementById('classificationBars');
+            renderClassificationFilters(session);
+            const visibleRows = getVisibleClassificationRows(session);
+            document.getElementById('classificationMeta').textContent = `${visibleRows.length} of ${session.classification.length} shown`;
+            const sessionFastest = session.fastest_lap?.lap_time || null;
+
+            if (!session.classification.length) {
+                container.innerHTML = '<div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">No classification data for this session.</div>';
+                return;
+            }
+
+            container.innerHTML = visibleRows.map((entry, index) => `
+                <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl ${index === 0 ? 'bg-paddock-gold text-black' : 'bg-white/10 text-white'} font-display text-2xl font-bold">${entry.position}</div>
+                            <div>
+                                <div class="font-semibold text-white">${escapeHtml(entry.full_name || entry.driver)}</div>
+                                <div class="text-xs tracking-[0.12em] text-slate-500">${escapeHtml(entry.driver || '--')}${entry.team ? ` · ${escapeHtml(entry.team)}` : ''}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-semibold ${entry.fastest_lap_time && sessionFastest && entry.fastest_lap_time === sessionFastest ? 'text-violet-300' : 'text-slate-200'}">${escapeHtml(formatLapTime(entry.fastest_lap_time || entry.time || '--'))}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTimingBars(session) {
+            const container = document.getElementById('timingBars');
+            const visibleDrivers = new Set(getVisibleClassificationRows(session).map(entry => entry.driver));
+            const filteredBars = (session.timing_bars || []).filter(item => visibleDrivers.has(item.driver));
+
+            if (!filteredBars.length) {
+                container.innerHTML = '<div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">Timing gaps are not available for this session.</div>';
+                return;
+            }
+
+            const maxGap = Math.max(...filteredBars.map(item => item.gap_seconds), 0.001);
+            container.innerHTML = filteredBars.map(item => `
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="font-semibold text-white">${escapeHtml(item.full_name)}</div>
+                        <div class="text-slate-400">+${item.gap_seconds.toFixed(3)}s</div>
+                    </div>
+                    <div class="h-3 overflow-hidden rounded-full bg-white/10">
+                        <div class="h-full rounded-full bg-paddock-red" style="width:${Math.max(8, (item.gap_seconds / maxGap) * 100)}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderGainers(session) {
+            const container = document.getElementById('gainersChart');
+            if (!session.top_gainers.length) {
+                container.innerHTML = '<div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">Grid delta is most useful for race or sprint sessions with grid and finish positions.</div>';
+                return;
+            }
+
+            const maxDelta = Math.max(...session.top_gainers.map(item => Math.abs(item.delta)), 1);
+            container.innerHTML = session.top_gainers.map(item => `
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="font-semibold text-white">${escapeHtml(item.full_name)}</div>
+                        <div class="${item.delta >= 0 ? 'text-paddock-mint' : 'text-red-300'}">${item.delta >= 0 ? '+' : ''}${item.delta}</div>
+                    </div>
+                    <div class="h-3 overflow-hidden rounded-full bg-white/10">
+                        <div class="h-full rounded-full ${item.delta >= 0 ? 'bg-paddock-mint' : 'bg-paddock-red'}" style="width:${Math.max(8, (Math.abs(item.delta) / maxDelta) * 100)}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTyres(session) {
+            const container = document.getElementById('tyreChart');
+            if (!session.tyre_usage.length) {
+                container.innerHTML = '<div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">No tyre usage data is available for this session.</div>';
+                return;
+            }
+
+            const maxLaps = Math.max(...session.tyre_usage.map(item => item.laps), 1);
+            container.innerHTML = session.tyre_usage.map(item => `
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="font-semibold text-white">${escapeHtml(item.compound)}</div>
+                        <div class="text-slate-400">${item.laps} laps</div>
+                    </div>
+                    <div class="h-3 overflow-hidden rounded-full bg-white/10">
+                        <div class="h-full rounded-full bg-paddock-gold" style="width:${Math.max(8, (item.laps / maxLaps) * 100)}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderIncidents(session) {
+            const container = document.getElementById('incidentFeed');
+            const meta = document.getElementById('incidentMeta');
+            const incidents = session.incidents || { dnf_count: 0, incident_count: 0, items: [] };
+            meta.textContent = `${incidents.dnf_count || 0} DNFs · ${incidents.incident_count || 0} incidents`;
+
+            if (!incidents.items?.length) {
+                container.innerHTML = '<div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-400">No DNF or incident messages were detected for this session.</div>';
+                return;
+            }
+
+            container.innerHTML = incidents.items.map(item => `
+                <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.16em] ${item.type === 'dnf' ? 'text-red-300' : 'text-slate-500'}">${escapeHtml(String(item.type || 'incident').replaceAll('_', ' '))}</div>
+                            <div class="mt-2 font-semibold text-white">${escapeHtml(item.driver || 'Race control')}</div>
+                            <div class="mt-1 text-sm text-slate-400">${escapeHtml(item.detail || '--')}</div>
+                        </div>
+                        <div class="text-xs uppercase tracking-[0.16em] text-slate-500">${item.lap ? `Lap ${item.lap}` : '--'}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderFocusedSession() {
+            const session = getFocusedSession();
+            if (!session) {
+                return;
+            }
+            renderSessionTabs(latestWeekend);
+            renderFocusSummary(session);
+            renderClassification(session);
+            renderTimingBars(session);
+            renderGainers(session);
+            renderTyres(session);
+            renderIncidents(session);
+        }
+
+        function getFocusedSession() {
+            if (!latestWeekend) {
+                return null;
+            }
+            return latestWeekend.sessions.find(session => session.session_key === activeSessionKey) || latestWeekend.sessions[0] || null;
+        }
+
+        async function fetchJson(url, options = {}) {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
+            return response.json();
+        }
+
+        async function loadSchedule() {
+            const select = document.getElementById('eventSelect');
+            const meta = document.getElementById('eventMeta');
+            try {
+                const payload = await fetchJson(`${FASTAPI_BASE}/api/v2/reference/events?year=${TARGET_YEAR}`);
+                latestSchedule = payload.events || [];
+
+                if (!latestSchedule.length) {
+                    select.innerHTML = '<option class="text-black" value="">No 2026 events found</option>';
+                    meta.textContent = 'FastF1 did not return a 2026 schedule.';
+                    return;
+                }
+
+                select.innerHTML = latestSchedule.map(event => `
+                    <option class="text-black" value="${escapeHtml(event.event_name)}">${escapeHtml(event.event_name)}</option>
+                `).join('');
+                meta.textContent = '2026 schedule loaded from FastF1.';
+            } catch (error) {
+                latestSchedule = [];
+                select.innerHTML = '<option class="text-black" value="">Backend unavailable</option>';
+                meta.textContent = `Could not reach FastAPI at ${FASTAPI_BASE}. Start the backend on port 8000.`;
+                document.getElementById('weekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-paddock-red"></span>Backend offline';
+                document.getElementById('eventTitle').textContent = 'FastAPI backend unavailable';
+                document.getElementById('eventSubtitle').textContent = 'The historical explorer needs the FastAPI server running on port 8000 before it can load 2026 events.';
+            }
+        }
+
+        async function loadWeekend() {
+            const requestId = ++currentRequestId;
+            const gpName = document.getElementById('eventSelect').value;
+            if (!gpName) {
+                return;
+            }
+
+            if (weekendAbortController) {
+                weekendAbortController.abort();
+            }
+            weekendAbortController = new AbortController();
+            const timeoutId = setTimeout(() => weekendAbortController.abort('timeout'), WEEKEND_REQUEST_TIMEOUT_MS);
+
+            document.getElementById('weekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-paddock-gold"></span>Loading weekend';
+
+            try {
+                const payload = await fetchJson(
+                    `${FASTAPI_BASE}/api/v2/history/weekend?year=${TARGET_YEAR}&gp_name=${encodeURIComponent(gpName)}`,
+                    { signal: weekendAbortController.signal }
+                );
+                if (requestId !== currentRequestId) {
+                    return;
+                }
+                latestWeekend = payload;
+                activeSessionKey = payload.sessions.find(session => session.session_key === 'R')?.session_key || payload.sessions[0]?.session_key || null;
+                activeClassificationLimit = 10;
+                renderWeekendHeader(payload);
+                renderFocusedSession();
+
+                const selectedEvent = latestSchedule.find(event => event.event_name === gpName);
+                document.getElementById('eventMeta').textContent = selectedEvent
+                    ? [selectedEvent.location, selectedEvent.country].filter(Boolean).join(', ')
+                    : '2026 event';
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    document.getElementById('weekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-paddock-red"></span>Load timed out';
+                    document.getElementById('eventTitle').textContent = 'Weekend load timed out';
+                    document.getElementById('eventSubtitle').textContent = 'FastF1 took too long for this circuit. Try refreshing or switch sessions after partial data loads.';
+                    return;
+                }
+                document.getElementById('weekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-paddock-red"></span>Load failed';
+                document.getElementById('eventTitle').textContent = 'Weekend load failed';
+                document.getElementById('eventSubtitle').textContent = error.message;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        document.getElementById('eventSelect').addEventListener('change', loadWeekend);
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSchedule();
+            await loadWeekend();
+        });
+    </script>
+</body>
+</html>
