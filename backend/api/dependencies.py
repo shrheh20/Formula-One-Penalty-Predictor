@@ -42,6 +42,8 @@ def get_live_race_monitor() -> LiveRaceMonitor:
         component_service=get_component_service(),
         enable_fastf1_live=settings.enable_fastf1_live,
         cache_dir=settings.fastf1_cache_dir,
+        historical_cache_dir=settings.historical_cache_dir,
+        enable_historical_runtime_generation=settings.enable_historical_runtime_generation,
     )
 
 

@@ -1,0 +1,47 @@
+[
+  {
+    "round_number": 1,
+    "event_name": "Australian Grand Prix",
+    "official_event_name": "FORMULA 1 QATAR AIRWAYS AUSTRALIAN GRAND PRIX 2026",
+    "location": "Melbourne",
+    "country": "Australia",
+    "event_format": "conventional",
+    "sessions": [
+      "Practice 1",
+      "Practice 2",
+      "Practice 3",
+      "Qualifying",
+      "Race"
+    ]
+  },
+  {
+    "round_number": 2,
+    "event_name": "Chinese Grand Prix",
+    "official_event_name": "FORMULA 1 HEINEKEN CHINESE GRAND PRIX 2026",
+    "location": "Shanghai",
+    "country": "China",
+    "event_format": "sprint_qualifying",
+    "sessions": [
+      "Practice 1",
+      "Sprint Qualifying",
+      "Sprint",
+      "Qualifying",
+      "Race"
+    ]
+  },
+  {
+    "round_number": 3,
+    "event_name": "Japanese Grand Prix",
+    "official_event_name": "FORMULA 1 ARAMCO JAPANESE GRAND PRIX 2026",
+    "location": "Suzuka",
+    "country": "Japan",
+    "event_format": "conventional",
+    "sessions": [
+      "Practice 1",
+      "Practice 2",
+      "Practice 3",
+      "Qualifying",
+      "Race"
+    ]
+  }
+]

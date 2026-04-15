@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -218,6 +221,73 @@ class FastAPIBackendTests(unittest.TestCase):
         self.assertEqual(crash_item["raw_category"], "Flag")
         self.assertEqual(crash_item["raw_flag"], "YELLOW")
         self.assertEqual(crash_item["raw_scope"], "Track")
+
+    def test_reference_events_uses_disk_cache_when_available(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            monitor = LiveRaceMonitor(
+                component_service=ComponentTrackerService(
+                    data_source=str(PROJECT_ROOT / "fia_2026_component_snapshot.csv"),
+                    circuit_rankings_path=str(PROJECT_ROOT / "strategic_circuit_rankings_2026.json"),
+                    source_manifest_path=str(PROJECT_ROOT / "fia_2026_document_sources.json"),
+                ),
+                enable_fastf1_live=False,
+                cache_dir=str(PROJECT_ROOT / ".cache" / "fastf1-test"),
+                historical_cache_dir=temp_dir,
+            )
+            cache_path = Path(temp_dir) / "schedule_2026.json"
+            expected = [{"event_name": "Japanese Grand Prix", "country": "Japan"}]
+            cache_path.write_text(json.dumps(expected), encoding="utf-8")
+
+            with patch("backend.data_sources.fastf1_monitor.fastf1.get_event_schedule") as mocked_schedule:
+                payload = asyncio.run(monitor.get_event_schedule(2026))
+
+            self.assertEqual(payload, expected)
+            mocked_schedule.assert_not_called()
+
+    def test_historical_weekend_uses_disk_cache_when_available(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            monitor = LiveRaceMonitor(
+                component_service=ComponentTrackerService(
+                    data_source=str(PROJECT_ROOT / "fia_2026_component_snapshot.csv"),
+                    circuit_rankings_path=str(PROJECT_ROOT / "strategic_circuit_rankings_2026.json"),
+                    source_manifest_path=str(PROJECT_ROOT / "fia_2026_document_sources.json"),
+                ),
+                enable_fastf1_live=False,
+                cache_dir=str(PROJECT_ROOT / ".cache" / "fastf1-test"),
+                historical_cache_dir=temp_dir,
+            )
+            cache_path = Path(temp_dir) / "weekend_2026_japanese-grand-prix.json"
+            expected = {
+                "event_name": "Japanese Grand Prix",
+                "official_event_name": "Formula 1 Japanese Grand Prix 2026",
+                "sessions": [{"session_key": "R", "session_name": "Race"}],
+                "cache_status": "fresh",
+            }
+            cache_path.write_text(json.dumps(expected), encoding="utf-8")
+
+            with patch("backend.data_sources.fastf1_monitor.fastf1.get_event") as mocked_event:
+                payload = asyncio.run(monitor.get_historical_weekend(2026, "Japanese Grand Prix"))
+
+            self.assertEqual(payload["event_name"], expected["event_name"])
+            self.assertEqual(payload["sessions"], expected["sessions"])
+            mocked_event.assert_not_called()
+
+    def test_historical_weekend_requires_precomputed_dataset_when_runtime_generation_disabled(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            monitor = LiveRaceMonitor(
+                component_service=ComponentTrackerService(
+                    data_source=str(PROJECT_ROOT / "fia_2026_component_snapshot.csv"),
+                    circuit_rankings_path=str(PROJECT_ROOT / "strategic_circuit_rankings_2026.json"),
+                    source_manifest_path=str(PROJECT_ROOT / "fia_2026_document_sources.json"),
+                ),
+                enable_fastf1_live=False,
+                cache_dir=str(PROJECT_ROOT / ".cache" / "fastf1-test"),
+                historical_cache_dir=temp_dir,
+                enable_historical_runtime_generation=False,
+            )
+
+            with self.assertRaises(RuntimeError):
+                asyncio.run(monitor.get_historical_weekend(2026, "Japanese Grand Prix"))
 
 
 if __name__ == "__main__":

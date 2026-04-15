@@ -267,6 +267,8 @@
         let historicalActiveClassificationLimit = 10;
         let historicalRequestId = 0;
         let historicalAbortController = null;
+        let historicalExplorerInitialized = false;
+        const historicalWeekendCache = new Map();
         const COMPONENT_LAYOUT = {
             'PU-CE': { x: 22, y: 49, labelX: 6, labelY: 42 },
             'ES': { x: 34, y: 42, labelX: 36, labelY: 18 },
@@ -341,6 +343,9 @@
             });
 
             expandedHighRiskCode = sectionId === 'high-risk' ? expandedHighRiskCode : null;
+            if (sectionId === 'past-races') {
+                ensureHistoricalExplorerLoaded();
+            }
             window.scrollTo({ top: 0, behavior: 'auto' });
         }
 
@@ -1131,6 +1136,29 @@
             renderHistoricalIncidents(session);
         }
 
+        function resetHistoricalWeekendState(message = 'Select a 2026 circuit to load historical weekend visuals.') {
+            historicalWeekend = null;
+            historicalActiveSessionKey = null;
+            document.getElementById('historicalWeekendBadge').innerHTML = '<span class="h-2 w-2 rounded-full bg-gray-400"></span>Ready to load';
+            document.getElementById('historicalEventTitle').textContent = 'Choose a 2026 circuit';
+            document.getElementById('historicalEventSubtitle').textContent = message;
+            document.getElementById('historicalSessionCount').textContent = '--';
+            document.getElementById('historicalEventFormat').textContent = '--';
+            document.getElementById('historicalEventLocation').textContent = '--';
+            document.getElementById('historicalSessionTabs').innerHTML = '<div class="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-500">No sessions loaded yet.</div>';
+            document.getElementById('historicalFocusTitle').textContent = 'Waiting';
+            document.getElementById('historicalFocusKind').textContent = '--';
+            document.getElementById('historicalFocusSummary').innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Pick a circuit to explore a session visually.</div>';
+            document.getElementById('historicalClassificationMeta').textContent = 'Waiting';
+            document.getElementById('historicalClassificationFilters').innerHTML = '';
+            document.getElementById('historicalClassificationBars').innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">No session selected yet.</div>';
+            document.getElementById('historicalTimingBars').innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Timing gaps will show here.</div>';
+            document.getElementById('historicalGainersChart').innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Position-change bars will appear for race-like sessions.</div>';
+            document.getElementById('historicalTyreChart').innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Compound distribution will appear for sessions with lap data.</div>';
+            document.getElementById('historicalIncidentMeta').textContent = 'Waiting';
+            document.getElementById('historicalIncidentFeed').innerHTML = '<div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-500">Incident and retirement summaries will appear for the selected session.</div>';
+        }
+
         async function loadHistoricalSchedule() {
             const select = document.getElementById('historicalEventSelect');
             const meta = document.getElementById('historicalEventMeta');
@@ -1141,13 +1169,18 @@
                 if (!historicalSchedule.length) {
                     select.innerHTML = '<option value="">No 2026 events found</option>';
                     meta.textContent = 'FastF1 did not return a 2026 schedule.';
+                    resetHistoricalWeekendState('No 2026 circuits are currently available from FastF1.');
                     return;
                 }
 
-                select.innerHTML = historicalSchedule.map(event => `
+                select.innerHTML = `
+                    <option value="">Select a 2026 circuit</option>
+                    ${historicalSchedule.map(event => `
                     <option value="${escapeHtml(event.event_name)}">${escapeHtml(event.event_name)}</option>
-                `).join('');
-                meta.textContent = '2026 schedule loaded from FastF1.';
+                `).join('')}
+                `;
+                meta.textContent = '2026 schedule loaded from the historical dataset. Pick a circuit to load weekend data.';
+                resetHistoricalWeekendState('Select a 2026 circuit to load cached historical weekend data.');
             } catch (error) {
                 historicalSchedule = [];
                 select.innerHTML = '<option value="">Backend unavailable</option>';
@@ -1162,6 +1195,20 @@
             const requestId = ++historicalRequestId;
             const gpName = document.getElementById('historicalEventSelect').value;
             if (!gpName) {
+                resetHistoricalWeekendState('Select a 2026 circuit to load cached historical weekend data.');
+                return;
+            }
+
+            if (historicalWeekendCache.has(gpName)) {
+                historicalWeekend = historicalWeekendCache.get(gpName);
+                historicalActiveSessionKey = historicalWeekend.sessions.find(session => session.session_key === 'R')?.session_key || historicalWeekend.sessions[0]?.session_key || null;
+                historicalActiveClassificationLimit = 10;
+                renderHistoricalWeekendHeader(historicalWeekend);
+                renderHistoricalFocusedSession();
+                const selectedEvent = historicalSchedule.find(event => event.event_name === gpName);
+                document.getElementById('historicalEventMeta').textContent = selectedEvent
+                    ? [selectedEvent.location, selectedEvent.country].filter(Boolean).join(', ')
+                    : '2026 event';
                 return;
             }
 
@@ -1183,6 +1230,7 @@
                 }
 
                 historicalWeekend = payload;
+                historicalWeekendCache.set(gpName, payload);
                 historicalActiveSessionKey = payload.sessions.find(session => session.session_key === 'R')?.session_key || payload.sessions[0]?.session_key || null;
                 historicalActiveClassificationLimit = 10;
                 renderHistoricalWeekendHeader(payload);
@@ -1213,6 +1261,14 @@
                 return;
             }
             select.addEventListener('change', loadHistoricalWeekend);
+        }
+
+        async function ensureHistoricalExplorerLoaded() {
+            if (historicalExplorerInitialized) {
+                return;
+            }
+            historicalExplorerInitialized = true;
+            await loadHistoricalSchedule();
         }
 
         async function loadDashboard() {
@@ -1246,8 +1302,6 @@
             wireComponentFilters();
             wireHistoricalExplorer();
             loadDashboard();
-            await loadHistoricalSchedule();
-            await loadHistoricalWeekend();
         });
     </script>
 </body>

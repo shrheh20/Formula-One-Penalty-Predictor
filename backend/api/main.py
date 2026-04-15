@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends, FastAPI, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -110,8 +110,10 @@ async def get_reliability_alerts(
 @app.get("/api/v2/reference/events")
 async def get_reference_events(
     year: int = Query(..., ge=2018),
+    response: Response = None,
     live_race_monitor: Annotated[LiveRaceMonitor, Depends(get_live_race_monitor)] = None,
 ) -> dict:
+    response.headers["Cache-Control"] = "public, max-age=3600"
     events = await live_race_monitor.get_event_schedule(year=year)
     return {"year": year, "events": events}
 
@@ -120,8 +122,10 @@ async def get_reference_events(
 async def get_historical_weekend(
     gp_name: str = Query(...),
     year: int = Query(default=2026, ge=2026, le=2026),
+    response: Response = None,
     live_race_monitor: Annotated[LiveRaceMonitor, Depends(get_live_race_monitor)] = None,
 ) -> dict:
+    response.headers["Cache-Control"] = "public, max-age=900"
     return await live_race_monitor.get_historical_weekend(year=year, gp_name=gp_name)
 
 

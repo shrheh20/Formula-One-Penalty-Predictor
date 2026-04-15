@@ -1,6 +1,6 @@
 # Formula One Penalty Predictor
 
-A professional Formula 1 analytics dashboard focused on 2026 power unit exposure, penalty risk, FIA document intelligence, and historical FastF1 weekend analysis.
+A professional Formula 1 analytics dashboard focused on 2026 power unit exposure, penalty risk, FIA document intelligence, and precomputed historical weekend analysis.
 
 The project combines two complementary application layers:
 
@@ -15,7 +15,7 @@ The dashboard is designed for race-weekend monitoring and historical analysis. I
 - FIA steward and document intelligence summaries
 - component usage views for the full driver grid
 - strategic circuit guidance for penalty timing
-- a `Past Races` experience for 2026 FastF1 historical weekend analysis
+- a `Past Races` experience for precomputed 2026 historical weekend analysis
 
 ## Key Features
 
@@ -35,7 +35,7 @@ The dashboard is designed for race-weekend monitoring and historical analysis. I
 
 ### Past Races (2026 Historical Explorer)
 
-The `Past Races` tab inside the main dashboard uses FastF1 historical data for the 2026 season and supports:
+The `Past Races` tab inside the main dashboard uses a precomputed 2026 dataset generated from FastF1 and supports:
 
 - circuit-by-circuit historical weekend selection
 - session switching across practice, qualifying, sprint, sprint qualifying / sprint shootout, and race where available
@@ -60,9 +60,9 @@ The repository includes:
 
 These files support the penalty predictor, circuit analysis, and local dashboard views.
 
-### FastF1-backed historical analysis
+### Precomputed historical analysis
 
-The FastAPI backend uses public FastF1 session interfaces such as:
+The historical dataset generator uses public FastF1 session interfaces such as:
 
 - `fastf1.get_event_schedule(...)`
 - `fastf1.get_event(...)`
@@ -71,6 +71,8 @@ The FastAPI backend uses public FastF1 session interfaces such as:
 - public session properties such as `laps`, `results`, `weather_data`, and `race_control_messages`
 
 The app does **not** import or call `fastf1.api` directly.
+
+Generated JSON files are stored in `data/historical/2026/` and are served directly by the FastAPI backend in production.
 
 ## Tech Stack
 
@@ -97,6 +99,7 @@ Formula-One-Penalty-Predictor/
 │   ├── services/
 │   └── utils/
 ├── dashboard.html
+├── build_historical_2026_dataset.py
 ├── live_intelligence_preview.html
 ├── tests/
 ├── test_component1.py
@@ -105,6 +108,9 @@ Formula-One-Penalty-Predictor/
 ├── fia_2026_document_sources.json
 ├── strategic_circuit_rankings_2026.json
 ├── circuit_weekend_results_2026.csv
+├── data/
+│   └── historical/
+│       └── 2026/
 ├── static/
 │   ├── driver-photos/
 │   ├── sidecar/
@@ -170,6 +176,16 @@ The FastAPI service also serves:
 - `/dashboard.html` -> main dashboard
 - `/live-preview` -> standalone historical preview
 
+### Historical dataset workflow
+
+Generate the deployable 2026 historical JSON files locally before starting the backend:
+
+```bash
+./.venv/bin/python build_historical_2026_dataset.py --year 2026 --force
+```
+
+This writes the schedule and weekend payloads into `data/historical/2026/`.
+
 ### FastF1 behavior
 
 FastF1 live loading is enabled by default when the package is installed.
@@ -188,6 +204,8 @@ F1_ENABLE_FASTF1_LIVE=false ./.venv/bin/uvicorn backend.api.main:app --reload --
 
 FastF1 responses are cached under `.cache/fastf1/`.
 
+Historical weekend serving reads from `data/historical/2026/` by default. Runtime historical generation is disabled by default so production does not fetch 2026 weekends on demand.
+
 ## Using the Dashboard
 
 ### Main dashboard tabs
@@ -200,12 +218,13 @@ FastF1 responses are cached under `.cache/fastf1/`.
 
 ### Past Races workflow
 
-1. Start the FastAPI backend.
-2. Open the Flask dashboard.
-3. Select the `Past Races` tab.
-4. Choose a 2026 circuit.
-5. Switch between available sessions.
-6. Use the classification dropdown to change how many drivers are shown.
+1. Generate the 2026 historical dataset.
+2. Start the FastAPI backend.
+3. Open the Flask dashboard.
+4. Select the `Past Races` tab.
+5. Choose a 2026 circuit.
+6. Switch between available sessions.
+7. Use the classification dropdown to change how many drivers are shown.
 
 The following visuals update with the selected session:
 
@@ -297,6 +316,8 @@ The simplest production path is to deploy the FastAPI app as the public web serv
 - static assets under `/static/...`
 - the modern `/api/v2/...` API
 - the legacy `/api/...` routes that the dashboard still uses
+
+Before deploying, generate and commit the contents of `data/historical/2026/` so the `Past Races` tab serves historical weekends without runtime FastF1 work.
 
 Suggested Render settings:
 

@@ -5,7 +5,9 @@ from __future__ import annotations
 from asyncio import TimeoutError as AsyncTimeoutError, to_thread, wait_for
 from datetime import datetime, timezone
 from functools import partial
+import json
 from pathlib import Path
+import re
 from typing import Any
 
 import pandas as pd
@@ -55,13 +57,20 @@ class LiveRaceMonitor:
         component_service: ComponentTrackerService,
         enable_fastf1_live: bool = False,
         cache_dir: str | None = None,
+        historical_cache_dir: str | None = None,
+        enable_historical_runtime_generation: bool = False,
     ):
         self.component_service = component_service
         self.enable_fastf1_live = enable_fastf1_live and fastf1 is not None
         self.cache_dir = cache_dir
+        self.historical_cache_dir = Path(historical_cache_dir or Path(cache_dir or ".cache").parent / "historical")
+        self.enable_historical_runtime_generation = enable_historical_runtime_generation
         self._cache_enabled = False
         self._cache_error: str | None = None
+        self._schedule_cache: dict[int, list[dict[str, Any]]] = {}
+        self._weekend_cache: dict[str, dict[str, Any]] = {}
         self._configure_fastf1_cache()
+        self.historical_cache_dir.mkdir(parents=True, exist_ok=True)
 
     async def get_current_state(
         self,
@@ -92,6 +101,19 @@ class LiveRaceMonitor:
         )
 
     async def get_event_schedule(self, year: int) -> list[dict[str, Any]]:
+        cached_schedule = self._schedule_cache.get(year)
+        if cached_schedule is not None:
+            return cached_schedule
+
+        cache_path = self._get_schedule_cache_path(year)
+        disk_cached_schedule = self._read_cached_payload(cache_path)
+        if isinstance(disk_cached_schedule, list):
+            self._schedule_cache[year] = disk_cached_schedule
+            return disk_cached_schedule
+
+        if not self.enable_historical_runtime_generation:
+            return []
+
         if fastf1 is None:
             return []
 
@@ -123,69 +145,99 @@ class LiveRaceMonitor:
                 }
             )
 
+        self._schedule_cache[year] = events
+        self._write_cached_payload(cache_path, events)
         return events
 
     async def get_historical_weekend(self, year: int, gp_name: str) -> dict[str, Any]:
+        cache_key = self._weekend_cache_key(year, gp_name)
+        cached_weekend = self._weekend_cache.get(cache_key)
+        if cached_weekend is not None:
+            return cached_weekend
+
+        cache_path = self._get_weekend_cache_path(year, gp_name)
+        disk_cached_weekend = self._read_cached_payload(cache_path)
+        if isinstance(disk_cached_weekend, dict):
+            self._weekend_cache[cache_key] = disk_cached_weekend
+            return disk_cached_weekend
+
+        if not self.enable_historical_runtime_generation:
+            raise RuntimeError(
+                "Historical dataset not found. Generate the precomputed 2026 dataset before serving Past Races."
+            )
+
         if fastf1 is None:
             raise RuntimeError("FastF1 is not installed")
         if year != self.SUPPORTED_HISTORY_YEAR:
             raise ValueError(f"Historical explorer currently supports {self.SUPPORTED_HISTORY_YEAR} only")
 
-        event = await wait_for(
-            to_thread(fastf1.get_event, year, gp_name),
-            timeout=self.HISTORICAL_EVENT_TIMEOUT_SECONDS,
-        )
-        available_sessions = self._extract_available_sessions(event)
-        sessions: list[dict[str, Any]] = []
+        try:
+            event = await wait_for(
+                to_thread(fastf1.get_event, year, gp_name),
+                timeout=self.HISTORICAL_EVENT_TIMEOUT_SECONDS,
+            )
+            available_sessions = self._extract_available_sessions(event)
+            sessions: list[dict[str, Any]] = []
 
-        for session_label in available_sessions:
-            session = None
-            try:
-                session = await wait_for(
-                    to_thread(fastf1.get_session, year, gp_name, session_label),
-                    timeout=self.HISTORICAL_SESSION_TIMEOUT_SECONDS,
-                )
-                await wait_for(
-                    to_thread(
-                        partial(
-                            session.load,
-                            telemetry=False,
-                            weather=True,
-                            messages=False,
-                        )
-                    ),
-                    timeout=self.HISTORICAL_SESSION_TIMEOUT_SECONDS,
-                )
-                sessions.append(self._summarize_historical_session(session, session_label))
-            except AsyncTimeoutError:
-                sessions.append(
-                    self._build_partial_historical_session(
-                        session,
-                        session_label,
-                        TimeoutError(
-                            f"Timed out after {self.HISTORICAL_SESSION_TIMEOUT_SECONDS}s while loading this FastF1 session"
+            for session_label in available_sessions:
+                session = None
+                try:
+                    session = await wait_for(
+                        to_thread(fastf1.get_session, year, gp_name, session_label),
+                        timeout=self.HISTORICAL_SESSION_TIMEOUT_SECONDS,
+                    )
+                    await wait_for(
+                        to_thread(
+                            partial(
+                                session.load,
+                                telemetry=False,
+                                weather=True,
+                                messages=False,
+                            )
                         ),
+                        timeout=self.HISTORICAL_SESSION_TIMEOUT_SECONDS,
                     )
-                )
-            except Exception as exc:
-                sessions.append(
-                    self._build_partial_historical_session(
-                        session,
-                        session_label,
-                        exc,
+                    sessions.append(self._summarize_historical_session(session, session_label))
+                except AsyncTimeoutError:
+                    sessions.append(
+                        self._build_partial_historical_session(
+                            session,
+                            session_label,
+                            TimeoutError(
+                                f"Timed out after {self.HISTORICAL_SESSION_TIMEOUT_SECONDS}s while loading this FastF1 session"
+                            ),
+                        )
                     )
-                )
+                except Exception as exc:
+                    sessions.append(
+                        self._build_partial_historical_session(
+                            session,
+                            session_label,
+                            exc,
+                        )
+                    )
 
-        return {
-            "year": year,
-            "event_name": str(getattr(event, "EventName", gp_name)),
-            "official_event_name": str(getattr(event, "OfficialEventName", getattr(event, "EventName", gp_name))),
-            "location": str(getattr(event, "Location", "")),
-            "country": str(getattr(event, "Country", "")),
-            "event_format": str(getattr(event, "EventFormat", "")),
-            "sessions": sessions,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
+            payload = {
+                "year": year,
+                "event_name": str(getattr(event, "EventName", gp_name)),
+                "official_event_name": str(getattr(event, "OfficialEventName", getattr(event, "EventName", gp_name))),
+                "location": str(getattr(event, "Location", "")),
+                "country": str(getattr(event, "Country", "")),
+                "event_format": str(getattr(event, "EventFormat", "")),
+                "sessions": sessions,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "cache_status": "fresh",
+            }
+            self._weekend_cache[cache_key] = payload
+            self._write_cached_payload(cache_path, payload)
+            return payload
+        except Exception:
+            stale_weekend = self._read_cached_payload(cache_path)
+            if isinstance(stale_weekend, dict):
+                stale_weekend = {**stale_weekend, "cache_status": "stale"}
+                self._weekend_cache[cache_key] = stale_weekend
+                return stale_weekend
+            raise
 
     async def _load_fastf1_state(self, year: int, gp_name: str, session_type: str) -> dict[str, Any]:
         session = await to_thread(fastf1.get_session, year, gp_name, session_type)
@@ -279,6 +331,33 @@ class LiveRaceMonitor:
         except Exception as exc:  # pragma: no cover - environment specific
             self._cache_enabled = False
             self._cache_error = str(exc)
+
+    def _weekend_cache_key(self, year: int, gp_name: str) -> str:
+        return f"{year}:{self._slugify(gp_name)}"
+
+    def _get_schedule_cache_path(self, year: int) -> Path:
+        return self.historical_cache_dir / f"schedule_{year}.json"
+
+    def _get_weekend_cache_path(self, year: int, gp_name: str) -> Path:
+        return self.historical_cache_dir / f"weekend_{year}_{self._slugify(gp_name)}.json"
+
+    def _read_cached_payload(self, path: Path) -> Any:
+        if not path.exists():
+            return None
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+
+    def _write_cached_payload(self, path: Path, payload: Any) -> None:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        except Exception:
+            return
+
+    def _slugify(self, value: str) -> str:
+        return re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-") or "event"
 
     def _normalize_session_type(self, session_type: str) -> str:
         if not session_type:
@@ -451,7 +530,7 @@ class LiveRaceMonitor:
                     "fastest_lap_number": fastest.get("fastest_lap_number") if fastest else None,
                 }
             )
-        return merged[:10]
+        return merged
 
     def _extract_fastest_lap(self, laps: Any) -> dict[str, Any] | None:
         cleaned_laps = self._prepare_fastest_lap_laps(laps)
