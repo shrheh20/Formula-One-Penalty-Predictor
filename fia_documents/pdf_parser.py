@@ -2,20 +2,35 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import re
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
-import fitz
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 LOGGER = logging.getLogger(__name__)
 
+try:
+    from pdfminer.high_level import extract_text as pdfminer_extract_text
+except ModuleNotFoundError:  # pragma: no cover - exercised only when dependency is absent
+    pdfminer_extract_text = None
+
 
 class PdfProcessingError(RuntimeError):
     pass
+
+
+@dataclass(slots=True)
+class DownloadedPdf:
+    local_file: str
+    sha256: str
+    size_bytes: int
+    downloaded_at: datetime
 
 
 class PdfProcessor:
@@ -38,7 +53,7 @@ class PdfProcessor:
         session.mount("http://", adapter)
         return session
 
-    def download_pdf(self, grand_prix: str, doc_number: int, pdf_url: str) -> str:
+    def download_pdf(self, grand_prix: str, doc_number: int, pdf_url: str) -> DownloadedPdf:
         safe_grand_prix = self._slugify(grand_prix)
         target_dir = self.data_dir / safe_grand_prix
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -55,16 +70,29 @@ class PdfProcessor:
 
         target_path.write_bytes(content)
         LOGGER.info("PDF downloaded: %s", target_path)
-        return str(target_path.resolve())
+        return DownloadedPdf(
+            local_file=str(target_path.resolve()),
+            sha256=hashlib.sha256(content).hexdigest(),
+            size_bytes=len(content),
+            downloaded_at=datetime.now(timezone.utc),
+        )
 
     def extract_text(self, local_file: str) -> str:
-        text_parts: list[str] = []
-        with fitz.open(local_file) as document:
-            for page in document:
-                page_text = page.get_text("text", sort=True)
-                if page_text:
-                    text_parts.append(f"\n--- PAGE {page.number + 1} ---\n{page_text}")
-        return "\n".join(text_parts).strip()
+        if pdfminer_extract_text is None:
+            raise PdfProcessingError(
+                "pdfminer.six is not installed. Add it to the environment to enable PDF parsing."
+            )
+
+        try:
+            text = pdfminer_extract_text(local_file)
+        except Exception as exc:  # pragma: no cover - dependency/parser exceptions vary
+            raise PdfProcessingError(f"Unable to parse PDF text from {local_file}: {exc}") from exc
+
+        normalized = "\n".join(line.rstrip() for line in text.splitlines())
+        normalized = re.sub(r"\n{3,}", "\n\n", normalized).strip()
+        if not normalized:
+            raise PdfProcessingError(f"No extractable text found in {local_file}")
+        return normalized
 
     @staticmethod
     def _slugify(value: str) -> str:

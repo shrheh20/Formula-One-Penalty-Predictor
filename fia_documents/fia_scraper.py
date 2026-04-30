@@ -36,6 +36,7 @@ class ScrapedDocument:
     grand_prix: str
     published_time: datetime | None
     pdf_url: str | None
+    source_page_url: str | None = None
     is_recalled: bool = False
 
     @property
@@ -80,31 +81,66 @@ class FiaDocumentScraper:
         return session
 
     def scrape_documents(self) -> list[ScrapedDocument]:
-        page_urls = [self.page_url, *self.extra_page_urls]
+        page_urls = self.discover_page_urls()
         documents: list[ScrapedDocument] = []
         for page_url in page_urls:
             html = self.fetch_html(page_url)
-            documents.extend(self.parse_documents(html))
+            documents.extend(self.parse_documents(html, page_url=page_url))
         return documents
 
-    def parse_documents(self, html: str) -> list[ScrapedDocument]:
+    def discover_page_urls(self) -> list[str]:
+        html = self.fetch_html(self.page_url)
+        soup = BeautifulSoup(html, "html.parser")
+
+        page_urls: list[str] = [self.page_url]
+        for anchor in soup.select("a[href*='/event/']"):
+            href = anchor.get("href")
+            if not href:
+                continue
+            page_urls.append(urljoin(BASE_URL, href))
+
+        page_urls.extend(self.extra_page_urls)
+
+        seen: set[str] = set()
+        unique_urls: list[str] = []
+        for page_url in page_urls:
+            normalized = page_url.strip()
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            unique_urls.append(normalized)
+
+        return unique_urls
+
+    def parse_documents(self, html: str, *, page_url: str | None = None) -> list[ScrapedDocument]:
         soup = BeautifulSoup(html, "html.parser")
         container = soup.select_one("div.decision-document-list")
         if container is None:
             raise ValueError("Unable to find FIA decision document list")
 
         documents: list[ScrapedDocument] = []
-        for event_node in container.select("ul.event-wrapper > li"):
-            event_title = event_node.select_one("div.event-title")
-            if event_title is None:
-                continue
+        event_nodes = container.select("ul.event-wrapper > li")
+        if event_nodes:
+            for event_node in event_nodes:
+                event_title = event_node.select_one("div.event-title")
+                if event_title is None:
+                    continue
 
-            grand_prix = self._normalize_whitespace(event_title.get_text(" ", strip=True))
+                grand_prix = self._normalize_whitespace(event_title.get_text(" ", strip=True))
+                if not grand_prix:
+                    continue
+
+                for row in event_node.select("li.document-row"):
+                    parsed = self._parse_document_row(grand_prix, row, page_url=page_url)
+                    if parsed is not None:
+                        documents.append(parsed)
+        else:
+            grand_prix = self._extract_page_grand_prix(soup)
             if not grand_prix:
-                continue
+                raise ValueError("Unable to determine grand prix for FIA event page")
 
-            for row in event_node.select("li.document-row"):
-                parsed = self._parse_document_row(grand_prix, row)
+            for row in container.select("li.document-row"):
+                parsed = self._parse_document_row(grand_prix, row, page_url=page_url)
                 if parsed is not None:
                     documents.append(parsed)
 
@@ -117,7 +153,13 @@ class FiaDocumentScraper:
         response.raise_for_status()
         return response.text
 
-    def _parse_document_row(self, grand_prix: str, row) -> ScrapedDocument | None:
+    def _parse_document_row(
+        self,
+        grand_prix: str,
+        row,
+        *,
+        page_url: str | None = None,
+    ) -> ScrapedDocument | None:
         title_node = row.select_one("div.title")
         if title_node is None:
             return None
@@ -145,8 +187,27 @@ class FiaDocumentScraper:
             grand_prix=grand_prix,
             published_time=published_time,
             pdf_url=pdf_url,
+            source_page_url=page_url,
             is_recalled=is_recalled,
         )
+
+    def _extract_page_grand_prix(self, soup: BeautifulSoup) -> str | None:
+        for selector in ("h1.page-title", "h1", "div.event-title", "title"):
+            node = soup.select_one(selector)
+            if node is None:
+                continue
+            value = self._normalize_whitespace(node.get_text(" ", strip=True))
+            grand_prix = self._match_grand_prix(value)
+            if grand_prix:
+                return grand_prix
+        return None
+
+    @staticmethod
+    def _match_grand_prix(value: str) -> str | None:
+        match = re.search(r"([A-Za-z0-9' -]+ Grand Prix)", value, re.IGNORECASE)
+        if not match:
+            return None
+        return " ".join(match.group(1).split())
 
     @staticmethod
     def _parse_published_time(raw_value: str | None) -> datetime | None:

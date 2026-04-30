@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from pydantic import Field
@@ -9,6 +10,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
+
+
+def _default_fia_documents_base_url() -> str:
+    port = os.getenv("PORT", "8000")
+    return f"http://127.0.0.1:{port}/fia-documents"
 
 
 class Settings(BaseSettings):
@@ -25,7 +31,7 @@ class Settings(BaseSettings):
     historical_cache_dir: str = str(BASE_DIR / "data" / "historical" / "2026")
     enable_historical_runtime_generation: bool = Field(default=False)
     sse_poll_interval_seconds: float = Field(default=1.0, ge=0.2, le=30.0)
-    fia_documents_base_url: str = "http://localhost:8001"
+    fia_documents_base_url: str = Field(default_factory=_default_fia_documents_base_url)
     fia_documents_timeout_seconds: float = Field(default=6.0, ge=1.0, le=30.0)
     fia_default_feed_limit: int = Field(default=50, ge=1, le=500)
 

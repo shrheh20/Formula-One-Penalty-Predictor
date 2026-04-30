@@ -56,6 +56,16 @@ class FIADocumentsClient:
             params["category"] = category
         return self._get_json("/signals/latest", params=params)
 
+    def get_insights(
+        self,
+        limit: int = 8,
+        grand_prix: str | None = None,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {"limit": limit}
+        if grand_prix:
+            params["grand_prix"] = grand_prix
+        return self._get_json("/insights/latest", params=params)
+
     def _get_json(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         url = f"{self.base_url}{path}"
         with httpx.Client(timeout=self.timeout_seconds) as client:

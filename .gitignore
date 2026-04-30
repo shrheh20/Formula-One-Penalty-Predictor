@@ -5,3 +5,8 @@ __pycache__/
 .DS_Store
 static/.DS_Store
 data/debug_docs/
+data/fia_documents.db
+data/news_intelligence/
+data/news_intelligence*.db
+.env
+.env.*

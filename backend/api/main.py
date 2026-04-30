@@ -4,14 +4,19 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated
 
+from env_loader import load_local_env
 from fastapi import BackgroundTasks, Depends, FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+
+load_local_env()
 
 from backend.agents.orchestrator import OrchestratorAgent
 from backend.agents.dnf_risk import DNFRiskAgent
@@ -28,8 +33,52 @@ from backend.data_sources.fastf1_monitor import LiveRaceMonitor
 from backend.services.component_service import ComponentTrackerService
 from backend.services.fia_intelligence_service import FIAIntelligenceService
 from backend.utils.event_bus import EventBus
+from fia_documents.api import create_app as create_fia_documents_app
+from fia_documents.db import init_db as init_fia_documents_db
+from fia_documents.scheduler import (
+    DocumentIngestionService,
+    IngestionScheduler,
+    parse_monitor_weekdays,
+)
+from news_intelligence.api import create_app as create_news_intelligence_app
+from news_intelligence.db import init_db as init_news_intelligence_db
+from news_intelligence.service import NewsIngestionService
 
-app = FastAPI(title=settings.app_name, version=settings.app_version)
+
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+fia_ingestion_service = DocumentIngestionService()
+news_ingestion_service = NewsIngestionService()
+fia_scheduler = None
+if _env_bool("FIA_MONITOR_ENABLED", True):
+    fia_scheduler = IngestionScheduler(
+        ingestion_service=fia_ingestion_service,
+        interval_seconds=int(os.getenv("SCRAPE_INTERVAL_SECONDS", "1800")),
+        run_weekend_only=_env_bool("FIA_MONITOR_WEEKEND_ONLY", False),
+        timezone_name=os.getenv("FIA_MONITOR_TIMEZONE", "America/Chicago"),
+        active_weekdays=parse_monitor_weekdays(os.getenv("FIA_MONITOR_ACTIVE_DAYS")),
+    )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_fia_documents_db()
+    init_news_intelligence_db()
+    if fia_scheduler is not None:
+        fia_scheduler.start()
+    try:
+        yield
+    finally:
+        if fia_scheduler is not None:
+            fia_scheduler.shutdown()
+
+
+app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -44,6 +93,16 @@ DASHBOARD_FILE = PROJECT_ROOT / "dashboard.html"
 LIVE_PREVIEW_FILE = PROJECT_ROOT / "live_intelligence_preview.html"
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+fia_documents_app = create_fia_documents_app(
+    ingestion_service=fia_ingestion_service,
+    scheduler=None,
+)
+news_intelligence_app = create_news_intelligence_app(
+    ingestion_service=news_ingestion_service,
+)
+app.mount("/fia-documents", fia_documents_app)
+app.mount("/news-intelligence", news_intelligence_app)
 
 
 @app.get("/")
@@ -218,6 +277,19 @@ async def get_predictor_intelligence_feed(
     return await asyncio.to_thread(
         fia_intelligence.get_predictor_feed,
         race_number,
+        limit,
+        grand_prix,
+    )
+
+
+@app.get("/api/v2/intelligence/fia-updates")
+async def get_fia_updates_feed(
+    limit: int = Query(default=8, ge=1, le=25),
+    grand_prix: str | None = Query(default=None),
+    fia_intelligence: Annotated[FIAIntelligenceService, Depends(get_fia_intelligence_service)] = None,
+) -> dict:
+    return await asyncio.to_thread(
+        fia_intelligence.get_latest_document_insights,
         limit,
         grand_prix,
     )

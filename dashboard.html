@@ -11,13 +11,14 @@
         <!-- Header -->
         <div class="bg-gradient-to-r from-red-600 to-red-800 rounded-lg shadow-lg p-6 mb-8">
             <h1 class="text-4xl font-bold text-white mb-2">F1 Grid Penalty Predictor</h1>
-            <p class="text-red-100">Live component usage tracking and penalty predictions from the predictor API</p>
+            <p class="text-red-100">Live component usage, FIA document intelligence, and race-weekend insights from the app backend</p>
         </div>
 
         <div class="sticky top-0 z-20 mb-6 rounded-2xl border border-black/5 bg-white/95 px-2 shadow-sm backdrop-blur">
             <div class="flex overflow-x-auto">
                 <button type="button" role="tab" aria-selected="true" data-section-tab="high-risk" onclick="setActiveSection('high-risk')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">High Risk</button>
                 <button type="button" role="tab" aria-selected="false" data-section-tab="live-results" onclick="setActiveSection('live-results')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">FIA Updates</button>
+                <button type="button" role="tab" aria-selected="false" data-section-tab="news-intelligence" onclick="setActiveSection('news-intelligence')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">News</button>
                 <button type="button" role="tab" aria-selected="false" data-section-tab="component-overview" onclick="setActiveSection('component-overview')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">Components</button>
                 <button type="button" role="tab" aria-selected="false" data-section-tab="strategic-circuits" onclick="setActiveSection('strategic-circuits')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">Circuits</button>
                 <button type="button" role="tab" aria-selected="false" data-section-tab="past-races" onclick="setActiveSection('past-races')" class="min-w-fit rounded-xl border-b-4 border-transparent px-6 py-4 text-lg font-medium text-gray-900 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600">Past Races</button>
@@ -40,21 +41,100 @@
             </section>
 
             <section id="live-results" role="tabpanel" class="hidden scroll-mt-28 rounded-2xl bg-white p-6 shadow">
-                <h2 class="text-2xl font-bold mb-6">Live Results Intelligence</h2>
+                <h2 class="text-2xl font-bold mb-6">Race Control & FIA Updates</h2>
                 <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <div class="rounded-xl border border-blue-200 bg-blue-50 p-4">
-                        <h3 class="mb-2 text-lg font-semibold text-blue-900">Live steward attention summary</h3>
+                        <h3 class="mb-2 text-lg font-semibold text-blue-900">Steward pressure</h3>
                         <p id="stewardSummary" class="text-sm text-blue-800">Loading steward intelligence...</p>
                     </div>
                     <div class="rounded-xl border border-purple-200 bg-purple-50 p-4">
-                        <h3 class="mb-2 text-lg font-semibold text-purple-900">Risk delta monitor</h3>
+                        <h3 class="mb-2 text-lg font-semibold text-purple-900">Competitive impact</h3>
                         <p id="riskDeltaSummary" class="text-sm text-purple-800">Loading live penalty-risk deltas...</p>
                     </div>
                 </div>
                 <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                    <h3 class="mb-3 text-lg font-semibold text-amber-900">Latest steward alerts</h3>
-                    <div id="stewardAlertsList" class="space-y-2 text-sm text-amber-900">
-                        <div class="text-amber-800">Loading latest alerts...</div>
+                    <div class="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-amber-900">Top Priority Rail</h3>
+                            <p class="mt-1 text-sm text-amber-800">Merged steward and FIA actions that need attention first.</p>
+                        </div>
+                        <span id="priorityRailMeta" class="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                            Loading priority actions
+                        </span>
+                    </div>
+                    <div id="priorityRailList" class="space-y-3 text-sm text-amber-900">
+                        <div class="rounded-lg border border-amber-200 bg-white/90 p-4 text-amber-800">Loading priority actions...</div>
+                    </div>
+                </div>
+                <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900">FIA Weekend Updates</h3>
+                            <p id="fiaInsightsHeadline" class="mt-1 text-sm text-slate-700">Loading the latest FIA race-weekend updates...</p>
+                        </div>
+                        <span id="fiaInsightsMeta" class="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                            Waiting for FIA updates
+                        </span>
+                    </div>
+                    <div>
+                        <div class="mb-3 flex items-center justify-between">
+                            <h4 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Official FIA Documents</h4>
+                        </div>
+                        <div id="fiaInsightsList" class="space-y-3">
+                            <div class="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">No FIA updates loaded yet.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="news-intelligence" role="tabpanel" class="hidden scroll-mt-28 rounded-2xl bg-white p-6 shadow">
+                <div class="mb-6 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="max-w-3xl">
+                        <div class="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+                            <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                            News Intelligence
+                        </div>
+                        <h2 class="mt-4 text-3xl font-bold text-gray-900">Strategy briefing</h2>
+                        <p class="mt-2 text-sm text-gray-600">Approved multi-source Formula 1 coverage with cluster-level race implications and direct article links.</p>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-2 xl:w-[30rem]">
+                        <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                            <div class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Approved clusters</div>
+                            <div id="newsClusterCount" class="mt-2 text-3xl font-bold text-gray-900">--</div>
+                        </div>
+                        <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                            <div class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Published stories</div>
+                            <div id="newsArticleCount" class="mt-2 text-3xl font-bold text-gray-900">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+                    <div class="rounded-2xl border border-red-200 bg-gradient-to-br from-red-50 via-white to-amber-50 p-6">
+                        <div class="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <div class="text-xs font-semibold uppercase tracking-[0.18em] text-red-600">Top briefing</div>
+                                <h3 class="mt-2 text-2xl font-bold text-gray-900">Priority story clusters</h3>
+                            </div>
+                        </div>
+                        <div id="newsClusterList" class="space-y-4">
+                            <div class="rounded-2xl border border-red-100 bg-white/90 p-4 text-sm text-gray-600">Loading approved strategy clusters...</div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+                        <div class="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Source coverage</div>
+                                <h3 class="mt-2 text-2xl font-bold text-gray-900">Latest published stories</h3>
+                            </div>
+                            <div id="newsArticleMeta" class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                                Loading article feed
+                            </div>
+                        </div>
+                        <div id="newsArticleList" class="space-y-4">
+                            <div class="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">Loading approved article feed...</div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -255,9 +335,14 @@
         const DEFAULT_RACE_NUMBER = 4;
         let allDriversData = [];
         let expandedHighRiskCode = null;
+        let expandedPriorityKey = null;
+        let expandedInsightKey = null;
         let activeSection = 'high-risk';
         let liveIntelligenceFeed = null;
         let liveStewardAlerts = null;
+        let liveFiaUpdates = null;
+        let liveNewsClusters = null;
+        let liveNewsArticles = null;
         const HISTORICAL_YEAR = 2026;
         const HISTORICAL_REQUEST_TIMEOUT_MS = 30000;
         const HISTORICAL_CLASSIFICATION_FILTERS = [3, 6, 10, 22];
@@ -333,7 +418,7 @@
                 tab.classList.toggle('shadow-none', !isActive);
             });
 
-            ['high-risk', 'live-results', 'component-overview', 'strategic-circuits', 'past-races'].forEach(id => {
+            ['high-risk', 'live-results', 'news-intelligence', 'component-overview', 'strategic-circuits', 'past-races'].forEach(id => {
                 const section = document.getElementById(id);
                 if (!section) {
                     return;
@@ -389,11 +474,11 @@
 
         function getApiBaseUrl() {
             if (window.location.protocol === 'file:') {
-                return 'http://localhost:8002';
+                return 'http://localhost:8000';
             }
 
-            if (['localhost', '127.0.0.1'].includes(window.location.hostname) && window.location.port !== '8002') {
-                return `${window.location.protocol}//${window.location.hostname}:8002`;
+            if (['localhost', '127.0.0.1'].includes(window.location.hostname) && window.location.port !== '8000') {
+                return `${window.location.protocol}//${window.location.hostname}:8000`;
             }
 
             return window.location.origin;
@@ -580,10 +665,444 @@
             }).join('');
         }
 
-        function renderIntelligenceCards(feed, alertsPayload) {
+        function formatTimestamp(value) {
+            if (!value) {
+                return 'Unknown publish time';
+            }
+
+            const parsed = new Date(value);
+            if (Number.isNaN(parsed.getTime())) {
+                return String(value);
+            }
+
+            return parsed.toLocaleString([], {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        }
+
+        function cleanInsightText(value) {
+            if (!value) {
+                return '';
+            }
+
+            return String(value)
+                .replace(/\s*Needs review\.?/gi, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function humanizeNewsValue(value, fallback = 'General') {
+            const cleaned = String(value || '').replaceAll('_', ' ').trim();
+            if (!cleaned) {
+                return fallback;
+            }
+            return cleaned.replace(/\b\w/g, letter => letter.toUpperCase());
+        }
+
+        function formatNewsOfficiality(level) {
+            const normalized = String(level || '').toLowerCase();
+            if (normalized === 'official') {
+                return 'Official';
+            }
+            if (normalized === 'secondary') {
+                return 'Corroborated';
+            }
+            return humanizeNewsValue(level, 'Verified');
+        }
+
+        function renderNewsClusterCard(cluster) {
+            const grandPrix = cluster.grand_prix ? `${escapeHtml(cluster.grand_prix)} · ` : '';
+            const clusterType = humanizeNewsValue(cluster.cluster_type, 'Story cluster');
+            const factual = cleanInsightText(cluster.factual_summary || '') || 'No factual summary available yet.';
+            const strategy = cleanInsightText(cluster.strategy_impact_summary || '') || 'Strategy implications are being prepared.';
+            const insight = cleanInsightText(cluster.derived_insight || '');
+
+            return `
+                <article class="rounded-2xl border border-red-100 bg-white/95 p-5 shadow-sm">
+                    <div class="mb-3 flex flex-wrap items-center gap-2">
+                        <span class="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-red-700">${escapeHtml(clusterType)}</span>
+                        <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">${grandPrix}${escapeHtml(cluster.publication_status || 'approved')}</span>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900">${escapeHtml(cluster.cluster_title || 'Strategy cluster')}</h4>
+                    <p class="mt-3 text-sm leading-6 text-slate-700">${escapeHtml(factual)}</p>
+                    <p class="mt-3 text-sm leading-6 text-red-800"><span class="font-semibold text-red-700">Strategy:</span> ${escapeHtml(strategy)}</p>
+                    ${insight ? `<p class="mt-3 text-sm leading-6 text-slate-600"><span class="font-semibold text-slate-700">Insight:</span> ${escapeHtml(insight)}</p>` : ''}
+                </article>
+            `;
+        }
+
+        function renderNewsArticleCard(article) {
+            const factual = cleanInsightText(article.factual_summary || '') || cleanInsightText(article.clean_text_preview || '') || 'No article summary available yet.';
+            const strategy = cleanInsightText(article.strategy_impact_summary || '') || cleanInsightText(article.derived_insight || '') || 'Strategy implications are still being prepared.';
+            const grandPrix = article.grand_prix ? ` · ${escapeHtml(article.grand_prix)}` : '';
+
+            return `
+                <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div class="mb-3 flex flex-wrap items-center gap-2">
+                        <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-700">${escapeHtml(article.source_display_name || article.source_key || 'Source')}</span>
+                        <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">${escapeHtml(formatNewsOfficiality(article.officiality_level))}</span>
+                        <span class="text-xs text-slate-500">${escapeHtml(formatTimestamp(article.published_at))}${grandPrix}</span>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        <a href="${escapeHtml(article.canonical_url)}" target="_blank" rel="noopener noreferrer" class="transition hover:text-red-600">
+                            ${escapeHtml(article.headline || 'Published article')}
+                        </a>
+                    </h4>
+                    <p class="mt-3 text-sm leading-6 text-slate-700">${escapeHtml(factual)}</p>
+                    <p class="mt-3 text-sm leading-6 text-red-800"><span class="font-semibold text-red-700">Strategy:</span> ${escapeHtml(strategy)}</p>
+                    <div class="mt-4">
+                        <a href="${escapeHtml(article.canonical_url)}" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-red-600 transition hover:text-red-700">
+                            Open source article →
+                        </a>
+                    </div>
+                </article>
+            `;
+        }
+
+        function renderNewsPanels(clusters, articles) {
+            const clusterCount = document.getElementById('newsClusterCount');
+            const articleCount = document.getElementById('newsArticleCount');
+            const articleMeta = document.getElementById('newsArticleMeta');
+            const clusterList = document.getElementById('newsClusterList');
+            const articleList = document.getElementById('newsArticleList');
+
+            if (!clusters || !articles) {
+                clusterCount.textContent = '--';
+                articleCount.textContent = '--';
+                articleMeta.textContent = 'Waiting for approved feed';
+                clusterList.innerHTML = '<div class="rounded-2xl border border-red-100 bg-white/90 p-4 text-sm text-gray-600">The news intelligence service is not returning approved clusters yet. Once the live news DB is connected and stories are approved, strategy clusters will appear here.</div>';
+                articleList.innerHTML = '<div class="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">No approved article feed is available right now. This tab is already wired to the published-only API and will populate as soon as the news store is reachable.</div>';
+                return;
+            }
+
+            clusterCount.textContent = clusters.length;
+            articleCount.textContent = articles.length;
+            articleMeta.textContent = `${articles.length} published stor${articles.length === 1 ? 'y' : 'ies'}`;
+
+            clusterList.innerHTML = clusters.length
+                ? clusters.map(renderNewsClusterCard).join('')
+                : '<div class="rounded-2xl border border-red-100 bg-white/90 p-4 text-sm text-gray-600">No approved clusters yet. Review approval will surface them here automatically.</div>';
+
+            articleList.innerHTML = articles.length
+                ? articles.map(renderNewsArticleCard).join('')
+                : '<div class="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">No approved published stories are available yet.</div>';
+        }
+
+        function cleanInsightMarkdown(value) {
+            if (!value) {
+                return '';
+            }
+
+            return String(value)
+                .replace(/\s*Needs review\.?/gi, '')
+                .replace(/\r/g, '')
+                .trim();
+        }
+
+        function renderInlineMarkdown(value) {
+            return escapeHtml(value).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        }
+
+        function renderInsightMarkdown(value) {
+            const cleaned = cleanInsightMarkdown(value);
+            if (!cleaned) {
+                return '';
+            }
+
+            const lines = cleaned
+                .split('\n')
+                .map(line => line.trim())
+                .filter(Boolean);
+
+            const blocks = [];
+            const bullets = [];
+
+            const flushBullets = () => {
+                if (!bullets.length) {
+                    return;
+                }
+                blocks.push(
+                    `<ul class="list-disc space-y-2 pl-5 text-sm leading-6 text-slate-700">${bullets.map(line => `<li>${renderInlineMarkdown(line)}</li>`).join('')}</ul>`
+                );
+                bullets.length = 0;
+            };
+
+            lines.forEach(line => {
+                if (line.startsWith('### ')) {
+                    flushBullets();
+                    blocks.push(`<p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">${renderInlineMarkdown(line.replace(/^###\s+/, ''))}</p>`);
+                    return;
+                }
+                if (line.startsWith('- ')) {
+                    bullets.push(line.replace(/^- /, ''));
+                    return;
+                }
+                flushBullets();
+                blocks.push(`<p class="text-sm leading-6 text-slate-700">${renderInlineMarkdown(line)}</p>`);
+            });
+
+            flushBullets();
+            return blocks.join('');
+        }
+
+        function formatInsightHeadline(value) {
+            const cleaned = cleanInsightText(value);
+            return cleaned || 'Latest FIA updates';
+        }
+
+        function formatInsightMeta(summary) {
+            const total = Number(summary.highlights_returned || 0);
+            const familyCounts = summary.family_counts || {};
+            const labels = [];
+
+            if (familyCounts.steward_decision) labels.push(`${familyCounts.steward_decision} steward`);
+            if (familyCounts.technical_compliance || familyCounts.technical_directive) labels.push('technical');
+            if (familyCounts.sporting_results) labels.push('official results');
+
+            if (!total) {
+                return 'No current FIA updates';
+            }
+
+            const suffix = labels.length ? ` · ${labels.slice(0, 3).join(' · ')}` : '';
+            return `${total} official updates${suffix}`;
+        }
+
+        function buildInsightEntities(item) {
+            const parts = [];
+            if (item.session) {
+                parts.push(`Session: ${item.session}`);
+            }
+            if (item.drivers?.length) {
+                parts.push(`Drivers: ${item.drivers.slice(0, 3).join(', ')}`);
+            } else if (item.teams?.length) {
+                parts.push(`Teams: ${item.teams.slice(0, 2).join(', ')}`);
+            }
+            return parts.join(' · ');
+        }
+
+        function normalizePriorityKey(value) {
+            return String(value || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, ' ')
+                .trim();
+        }
+
+        function buildItemKey(item, fallback = 'item') {
+            return normalizePriorityKey(item?.document_id || item?.title || item?.message || fallback);
+        }
+
+        function isHighPriorityAlert(alert) {
+            const priority = String(alert?.priority || '').toLowerCase();
+            const title = String(alert?.title || '').toLowerCase();
+            const message = String(alert?.message || '').toLowerCase();
+
+            if (priority === 'high') {
+                return true;
+            }
+
+            return (
+                title.startsWith('steward update') ||
+                title.startsWith('technical issue') ||
+                message.includes('steward review') ||
+                message.includes('steward decision')
+            );
+        }
+
+        function buildInsightSummaryLines(item) {
+            const storedSummary = cleanInsightMarkdown(item.dashboard_summary || '');
+            if (storedSummary) {
+                return storedSummary
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(Boolean)
+                    .slice(0, 3);
+            }
+
+            const lines = [];
+            const happened = cleanInsightText(item.what_happened || '');
+            const matters = cleanInsightText(item.why_it_matters || '');
+            const entities = buildInsightEntities(item);
+
+            if (happened) {
+                lines.push(happened);
+            }
+            if (matters && matters !== happened) {
+                lines.push(matters.replace(/^Why it matters:\s*/i, ''));
+            }
+            if (entities) {
+                lines.push(entities);
+            }
+
+            return lines.slice(0, 3);
+        }
+
+        function renderPriorityItem(item) {
+            const itemKey = buildItemKey(item, item.timestamp);
+            const isExpanded = expandedPriorityKey === itemKey;
+            const toneClass = item.kind === 'alert'
+                ? 'border-amber-200 bg-white/90'
+                : 'border-red-200 bg-white/90';
+            const detailLines = [item.summary, item.impact, item.meta]
+                .map(cleanInsightText)
+                .filter(Boolean)
+                .slice(0, 3);
+            const storedSummaryMarkup = item.dashboard_summary ? renderInsightMarkdown(item.dashboard_summary) : '';
+            const detailMarkup = isExpanded
+                ? `
+                    <div class="mt-3 space-y-2 border-t border-amber-100 pt-3">
+                        ${storedSummaryMarkup || detailLines.map(line => `<p class="text-sm leading-6 text-slate-700">${escapeHtml(line)}</p>`).join('')}
+                    </div>
+                `
+                : '<p class="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Click for context</p>';
+
+            return `
+                <button type="button" onclick="togglePriorityItem('${itemKey}')" class="w-full rounded-lg border ${toneClass} p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                    <div class="mb-2 flex flex-wrap items-center gap-2">
+                        <span class="inline-flex rounded-full border border-amber-200 bg-amber-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-800">${escapeHtml(item.label)}</span>
+                        ${item.timestamp ? `<span class="text-xs text-slate-500">${escapeHtml(item.timestamp)}</span>` : ''}
+                        <span class="ml-auto text-xs text-slate-400" aria-hidden="true">${isExpanded ? '▴' : '▾'}</span>
+                    </div>
+                    <h4 class="text-base font-semibold text-slate-900">${escapeHtml(item.title)}</h4>
+                    ${detailMarkup}
+                </button>
+            `;
+        }
+
+        function renderInsightCard(item, { compact = false } = {}) {
+            const itemKey = buildItemKey(item, item.published_time);
+            const isExpanded = expandedInsightKey === itemKey;
+            const importanceClass = item.importance === 'high'
+                ? 'border-red-200 bg-red-50 text-red-700'
+                : item.importance === 'medium'
+                    ? 'border-blue-200 bg-blue-50 text-blue-700'
+                    : 'border-slate-200 bg-slate-100 text-slate-700';
+            const timestamp = item.published_time ? formatTimestamp(item.published_time) : 'Unknown publish time';
+            const detailLines = buildInsightSummaryLines(item);
+            const storedSummaryMarkup = item.dashboard_summary ? renderInsightMarkdown(item.dashboard_summary) : '';
+            const detailMarkup = isExpanded
+                ? `
+                    <div class="mt-3 space-y-2 border-t border-slate-100 pt-3">
+                        ${storedSummaryMarkup || detailLines.map(line => `<p class="text-sm leading-6 text-slate-700">${escapeHtml(line)}</p>`).join('')}
+                    </div>
+                `
+                : '<p class="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Click for context</p>';
+            return `
+                <button type="button" onclick="toggleInsightItem('${itemKey}')" class="w-full rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                    <div class="mb-3 flex flex-wrap items-center gap-2">
+                        <span class="inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${importanceClass}">${escapeHtml(item.category_label || 'Update')}</span>
+                        <span class="text-xs text-slate-500">${escapeHtml(timestamp)}</span>
+                        <span class="ml-auto text-xs text-slate-400" aria-hidden="true">${isExpanded ? '▴' : '▾'}</span>
+                    </div>
+                    <h4 class="text-base font-semibold text-slate-900">${escapeHtml(item.title || 'FIA update')}</h4>
+                    ${detailMarkup}
+                </button>
+            `;
+        }
+
+        function rerenderIntelligencePanels() {
+            const hiddenKeys = renderPriorityRail(liveStewardAlerts, liveFiaUpdates);
+            renderDocumentInsights(liveFiaUpdates, hiddenKeys);
+        }
+
+        function togglePriorityItem(itemKey) {
+            expandedPriorityKey = expandedPriorityKey === itemKey ? null : itemKey;
+            rerenderIntelligencePanels();
+        }
+
+        function toggleInsightItem(itemKey) {
+            expandedInsightKey = expandedInsightKey === itemKey ? null : itemKey;
+            rerenderIntelligencePanels();
+        }
+
+        function renderDocumentInsights(insightsPayload, hiddenKeys = new Set()) {
+            const headline = document.getElementById('fiaInsightsHeadline');
+            const meta = document.getElementById('fiaInsightsMeta');
+            const list = document.getElementById('fiaInsightsList');
+
+            if (!insightsPayload) {
+                headline.textContent = 'FIA updates are unavailable right now.';
+                meta.textContent = 'Upstream unavailable';
+                list.innerHTML = '<div class="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">Start the FIA backend to load the latest official FIA documents here.</div>';
+                return;
+            }
+
+            const summary = insightsPayload.summary || {};
+            const documentFeed = (insightsPayload.document_feed || insightsPayload.highlights || []).filter(item => {
+                const key = normalizePriorityKey(item.document_id || item.title);
+                return !hiddenKeys.has(key);
+            });
+            headline.textContent = formatInsightHeadline(insightsPayload.headline);
+            meta.textContent = formatInsightMeta(summary);
+
+            if (!documentFeed.length) {
+                list.innerHTML = '<div class="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">Priority actions are already surfaced above. No additional official FIA documents need attention right now.</div>';
+                return;
+            }
+
+            list.innerHTML = documentFeed.map(item => renderInsightCard(item, { compact: true })).join('');
+        }
+
+        function renderPriorityRail(alertsPayload, insightsPayload) {
+            const meta = document.getElementById('priorityRailMeta');
+            const list = document.getElementById('priorityRailList');
+            const priorityItems = [];
+            const hiddenKeys = new Set();
+
+            const alerts = alertsPayload?.alerts || [];
+            alerts.filter(isHighPriorityAlert).slice(0, 4).forEach(alert => {
+                const key = normalizePriorityKey(alert.title || alert.message);
+                if (hiddenKeys.has(key)) {
+                    return;
+                }
+                hiddenKeys.add(key);
+                priorityItems.push({
+                    kind: 'alert',
+                    label: 'Steward / Technical',
+                    title: alert.title || 'Steward update',
+                    summary: cleanInsightText(alert.message || 'A new priority alert was issued.'),
+                    meta: '',
+                    impact: '',
+                    timestamp: alert.published_time ? formatTimestamp(alert.published_time) : '',
+                });
+            });
+
+            const criticalHighlights = insightsPayload?.critical_highlights || [];
+            criticalHighlights.forEach(item => {
+                const key = normalizePriorityKey(item.document_id || item.title);
+                if (hiddenKeys.has(key)) {
+                    return;
+                }
+                hiddenKeys.add(key);
+                priorityItems.push({
+                    kind: 'highlight',
+                    label: item.category_label || 'Critical action',
+                    title: item.title || 'FIA action',
+                    summary: cleanInsightText(item.what_happened || 'A critical FIA action was published.'),
+                    meta: buildInsightEntities(item),
+                    impact: cleanInsightText(item.why_it_matters || ''),
+                    dashboard_summary: item.dashboard_summary || '',
+                    timestamp: item.published_time ? formatTimestamp(item.published_time) : '',
+                });
+            });
+
+            const sortedItems = priorityItems.slice(0, 5);
+            if (!sortedItems.length) {
+                meta.textContent = 'No urgent items';
+                list.innerHTML = '<div class="rounded-lg border border-amber-200 bg-white/90 p-4 text-sm text-amber-800">No urgent steward or FIA actions are open right now. Use the official FIA document feed below for confirmed weekend updates.</div>';
+                return hiddenKeys;
+            }
+
+            meta.textContent = `${sortedItems.length} priority item${sortedItems.length === 1 ? '' : 's'}`;
+            list.innerHTML = sortedItems.map(renderPriorityItem).join('');
+            return hiddenKeys;
+        }
+
+        function renderIntelligenceCards(feed, alertsPayload, insightsPayload) {
             const stewardSummary = document.getElementById('stewardSummary');
             const riskDeltaSummary = document.getElementById('riskDeltaSummary');
-            const stewardAlertsList = document.getElementById('stewardAlertsList');
 
             if (!feed) {
                 stewardSummary.textContent = 'Live FIA intelligence feed unavailable. Showing base component risk only.';
@@ -596,18 +1115,7 @@
                     `${summary.predictions_count || 0} predictions enriched with FIA steward context and live risk deltas.`;
             }
 
-            const alerts = alertsPayload?.alerts || [];
-            if (!alerts.length) {
-                stewardAlertsList.innerHTML = '<div class="text-amber-800">No recent steward alerts detected.</div>';
-                return;
-            }
-
-            stewardAlertsList.innerHTML = alerts.slice(0, 6).map(alert => `
-                <div class="rounded-lg border border-amber-200 bg-white/80 p-3">
-                    <div class="font-semibold">${escapeHtml(alert.title || 'Steward update')}</div>
-                    <div class="text-xs text-gray-600 mt-1">${escapeHtml(alert.message || '')}</div>
-                </div>
-            `).join('');
+            rerenderIntelligencePanels();
         }
 
         function populateComponentFilters(drivers) {
@@ -758,13 +1266,14 @@
             document.getElementById('highRiskBadge').textContent = 'Load failed';
             document.getElementById('highRiskDrivers').innerHTML = `
                 <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-                    Could not load live data from <code>${API_BASE_URL}</code>. Start the predictor API on port 8002 and refresh.
+                    Could not load live data from <code>${API_BASE_URL}</code>. Start the dashboard backend and refresh.
                     <div class="mt-2 text-sm text-red-700">${error.message}</div>
                 </div>
             `;
             document.getElementById('componentGrid').innerHTML = '';
             document.getElementById('bestCircuits').innerHTML = '';
             document.getElementById('worstCircuits').innerHTML = '';
+            renderNewsPanels(null, null);
         }
 
         function formatHistoricalLapTime(value) {
@@ -1273,25 +1782,32 @@
 
         async function loadDashboard() {
             try {
-                const [health, drivers, circuits, fallbackPredictions, intelligenceFeed, stewardAlerts] = await Promise.all([
+                const [health, drivers, circuits, fallbackPredictions, intelligenceFeed, stewardAlerts, fiaUpdates, newsClusters, newsArticles] = await Promise.all([
                     fetchJson('/api/health'),
                     fetchJson('/api/drivers'),
                     fetchJson('/api/circuits'),
                     fetchJson(`/api/predictions?race=${DEFAULT_RACE_NUMBER}`),
                     safeFetchJson(`/api/v2/intelligence/predictor-feed?race_number=${DEFAULT_RACE_NUMBER}&limit=100`),
-                    safeFetchJson('/api/v2/intelligence/steward-alerts?limit=8')
+                    safeFetchJson('/api/v2/intelligence/steward-alerts?limit=8'),
+                    safeFetchJson('/api/v2/intelligence/fia-updates?limit=6'),
+                    safeFetchJson('/news-intelligence/clusters/latest?limit=6&published_only=true'),
+                    safeFetchJson('/news-intelligence/articles/latest?limit=12&published_only=true')
                 ]);
 
                 setStatusBadge(true, 'API healthy');
                 allDriversData = drivers.drivers;
                 liveIntelligenceFeed = intelligenceFeed;
                 liveStewardAlerts = stewardAlerts;
+                liveFiaUpdates = fiaUpdates;
+                liveNewsClusters = newsClusters;
+                liveNewsArticles = newsArticles;
                 populateComponentFilters(allDriversData);
                 const predictions = intelligenceFeed?.predictions?.length ? intelligenceFeed.predictions : fallbackPredictions.predictions;
-                renderIntelligenceCards(intelligenceFeed, stewardAlerts);
+                renderIntelligenceCards(intelligenceFeed, stewardAlerts, fiaUpdates);
                 renderHighRiskDrivers(predictions);
                 renderComponentGrid(allDriversData);
                 renderCircuits(circuits.circuits);
+                renderNewsPanels(newsClusters, newsArticles);
             } catch (error) {
                 renderError(error);
             }

@@ -1,11 +1,15 @@
 # Formula One Penalty Predictor
 
+For the current local runbook and operator workflow, see [OPERATIONS.md](/Users/shrheh/Documents/F1-PenaltyPredictor/Formula-One-Penalty-Predictor/OPERATIONS.md).
+
 A professional Formula 1 analytics dashboard focused on 2026 power unit exposure, penalty risk, FIA document intelligence, and precomputed historical weekend analysis.
 
 The project combines two complementary application layers:
 
-- a Flask application that serves the main dashboard and legacy `/api/...` routes
-- a FastAPI backend that powers the newer `/api/v2/...` intelligence and historical weekend analysis endpoints
+- a dedicated FIA documents ingestion service that scrapes, downloads, parses, classifies, and stores FIA PDFs
+- a FastAPI dashboard backend that serves `dashboard.html`, historical analysis, and the `/api/v2/...` intelligence endpoints
+
+A third layer is now in active development and documented in [NEWS_INTELLIGENCE_SPEC.md](/Users/shrheh/Documents/F1-PenaltyPredictor/Formula-One-Penalty-Predictor/NEWS_INTELLIGENCE_SPEC.md): a source-grounded multi-source news intelligence system for clustered, citation-backed F1 story monitoring.
 
 ## Product Overview
 
@@ -13,6 +17,7 @@ The dashboard is designed for race-weekend monitoring and historical analysis. I
 
 - penalty-risk monitoring based on FIA component allocation data
 - FIA steward and document intelligence summaries
+- a review-gated `News` tab with approved F1 article and cluster summaries
 - component usage views for the full driver grid
 - strategic circuit guidance for penalty timing
 - a `Past Races` experience for precomputed 2026 historical weekend analysis
@@ -32,6 +37,8 @@ The dashboard is designed for race-weekend monitoring and historical analysis. I
 - Steward alert summaries
 - Risk-delta monitoring from FIA-backed signals
 - Predictor feed enrichment for the main dashboard
+- LLM-backed FIA document insight cards for the `FIA Updates` tab
+- Review queue and targeted reprocessing for failed or unknown FIA documents
 
 ### Past Races (2026 Historical Explorer)
 
@@ -144,37 +151,148 @@ python3 -m venv .venv
 
 ## Running the Application
 
-For local development, the project can still be run with separate services.
+For local development, the recommended setup is one FastAPI service on port `8000`.
 
-- Flask on port `5001` for the legacy dashboard workflow
-- FastAPI on port `8000` for `/api/v2/...` and the historical explorer
+Do not open `dashboard.html` through a separate static file server such as Live Server on port `5500` unless the dashboard backend is also running on `8000`. The dashboard API calls are designed to target the FastAPI backend on `8000`.
 
-### Start the Flask dashboard
+### Start the unified dashboard + FIA service
+
+From the `Formula-One-Penalty-Predictor/` directory:
 
 ```bash
-./.venv/bin/python api.py
+export DATABASE_URL='postgresql+psycopg://postgres:3520@localhost:5432/fia_documents'
+export FIA_DOCS_DIR='data/fia_docs'
+export LOG_LEVEL='INFO'
+
+# Local LLM classification / extraction
+export LLM_API_URL='http://localhost:11434'
+export LLM_API_KEY='dummy'
+export LLM_MODEL='qwen3.5:2b'
+
+# Mistral Small 4 for FIA race-impact summarization only
+export SUMMARY_LLM_API_URL='https://api.mistral.ai'
+export SUMMARY_LLM_API_KEY='YOUR_MISTRAL_API_KEY'
+export SUMMARY_LLM_MODEL='mistral-small-2603'
+
+# News intelligence subsystem
+export NEWS_DATABASE_URL='postgresql+psycopg://postgres:password@localhost:5432/news_intelligence'
+export NEWS_QDRANT_URL='http://127.0.0.1:6333'
+export NEWS_QDRANT_API_KEY=''
+
+# 30-minute FIA monitor
+export FIA_MONITOR_ENABLED=true
+export SCRAPE_INTERVAL_SECONDS=1800
+export FIA_MONITOR_WEEKEND_ONLY=true
+export FIA_MONITOR_TIMEZONE='America/Chicago'
+export FIA_MONITOR_ACTIVE_DAYS='4,5,6'
+
+../.venv/bin/uvicorn backend.api.main:app --port 8000
+```
+
+Or use the included launcher so the working directory and venv are always correct:
+
+```bash
+./scripts/start_dashboard_server.sh
+```
+
+From the parent workspace directory `/Users/shrheh/Documents/F1-PenaltyPredictor`, you can also run:
+
+```bash
+./start_f1_dashboard.sh
 ```
 
 Open:
 
-`http://localhost:5001`
+- `http://localhost:8000/dashboard.html`
+- `http://localhost:8000/docs`
 
-### Start the FastAPI backend
-
-```bash
-./.venv/bin/uvicorn backend.api.main:app --reload --port 8000
-```
-
-Open:
-
-`http://localhost:8000/docs`
-
-The FastAPI service also serves:
+This single service serves:
 
 - `/` -> main dashboard
 - `/dashboard` -> main dashboard
 - `/dashboard.html` -> main dashboard
 - `/live-preview` -> standalone historical preview
+- `/fia-documents/health`
+- `/fia-documents/documents/ingest`
+- `/fia-documents/documents/review-queue`
+- `/fia-documents/documents/reprocess`
+- `/fia-documents/insights/latest`
+- `/news-intelligence/health`
+- `/news-intelligence/sources`
+- `/news-intelligence/articles/ingest`
+- `/news-intelligence/articles/latest`
+
+### Local news review CLI
+
+Use the local CLI when you want to review or publish news stories without exposing any admin surface in the public dashboard.
+
+From `Formula-One-Penalty-Predictor/`:
+
+```bash
+./.venv/bin/python -m news_intelligence.review_cli stats
+./.venv/bin/python -m news_intelligence.review_cli queue --limit 15
+./.venv/bin/python -m news_intelligence.review_cli show cluster 1
+./.venv/bin/python -m news_intelligence.review_cli approve cluster 1 --notes "Verified and ready to publish."
+./.venv/bin/python -m news_intelligence.review_cli reject article 4 --notes "Filtered or not useful for the public strategy feed."
+```
+
+If you just want the queue without remembering paths:
+
+```bash
+./scripts/review_news_queue.sh --limit 15
+```
+
+From the parent workspace directory:
+
+```bash
+./review_f1_news_queue.sh --limit 15
+```
+
+Recommended workflow:
+
+1. Run `queue` to inspect open review tasks.
+2. Run `show cluster <id>` to inspect the cluster summary and member articles.
+3. Approve or reject at the `cluster` level whenever possible so article states stay aligned automatically.
+
+### First-time refresh after startup
+
+Once the app is running, ingest the latest FIA documents:
+
+```bash
+curl -X POST 'http://localhost:8000/fia-documents/documents/ingest?apply_processing=true'
+```
+
+Then refresh `http://localhost:8000/dashboard.html`.
+
+### Restart sequence from scratch
+
+If you have stopped everything, restart in this order:
+
+1. Start Ollama if you are using local LLM classification.
+2. Start the FastAPI app on `8000`.
+3. Run one manual ingest.
+4. Open the dashboard and check the `FIA Updates` tab.
+
+If you want Mistral Small 4 only for the stored FIA document summaries, leave `LLM_*` pointing at your current local model and set `SUMMARY_LLM_*` to the Mistral API values above.
+Local runs also load [/Users/shrheh/Documents/F1-PenaltyPredictor/Formula-One-Penalty-Predictor/.env](</Users/shrheh/Documents/F1-PenaltyPredictor/Formula-One-Penalty-Predictor/.env>) automatically when present, while Render should keep using its own environment-variable settings.
+
+### Optional standalone FIA documents service
+
+If you explicitly want FIA ingestion on a second process, you can still run:
+
+```bash
+export PORT=8001
+../.venv/bin/python main.py
+```
+
+and point the dashboard backend at it with:
+
+```bash
+export F1_FIA_DOCUMENTS_BASE_URL='http://localhost:8001'
+../.venv/bin/uvicorn backend.api.main:app --port 8000
+```
+
+That override is optional. The default local and Render setup does not need it.
 
 ### Historical dataset workflow
 
@@ -193,13 +311,13 @@ FastF1 live loading is enabled by default when the package is installed.
 Force FastF1 mode explicitly:
 
 ```bash
-F1_ENABLE_FASTF1_LIVE=true ./.venv/bin/uvicorn backend.api.main:app --reload --port 8000
+F1_ENABLE_FASTF1_LIVE=true F1_FIA_DOCUMENTS_BASE_URL='http://localhost:8001' ../.venv/bin/uvicorn backend.api.main:app --port 8000
 ```
 
 Disable FastF1 and stay in snapshot mode:
 
 ```bash
-F1_ENABLE_FASTF1_LIVE=false ./.venv/bin/uvicorn backend.api.main:app --reload --port 8000
+F1_ENABLE_FASTF1_LIVE=false F1_FIA_DOCUMENTS_BASE_URL='http://localhost:8001' ../.venv/bin/uvicorn backend.api.main:app --port 8000
 ```
 
 FastF1 responses are cached under `.cache/fastf1/`.
@@ -211,7 +329,7 @@ Historical weekend serving reads from `data/historical/2026/` by default. Runtim
 ### Main dashboard tabs
 
 - `High Risk`: drivers at elevated grid-penalty risk
-- `FIA Updates`: steward and FIA signal summaries
+- `FIA Updates`: steward summaries, risk deltas, latest alerts, and LLM FIA document insight cards
 - `Components`: full-grid power unit usage view
 - `Circuits`: strategic penalty timing by circuit
 - `Past Races`: 2026 historical weekend explorer
@@ -220,7 +338,7 @@ Historical weekend serving reads from `data/historical/2026/` by default. Runtim
 
 1. Generate the 2026 historical dataset.
 2. Start the FastAPI backend.
-3. Open the Flask dashboard.
+3. Open the dashboard at `http://localhost:8000/dashboard.html`.
 4. Select the `Past Races` tab.
 5. Choose a 2026 circuit.
 6. Switch between available sessions.
@@ -237,23 +355,13 @@ The following visuals update with the selected session:
 
 ## API Surface
 
-### Flask routes
+### Dashboard backend routes
 
 ```text
-GET /api
 GET /api/health
 GET /api/predictions?race=4
 GET /api/drivers
-GET /api/driver/<code>
 GET /api/circuits
-GET /api/report/<race_number>
-GET /api/betting-insights?race=4
-GET /api/sources
-```
-
-### FastAPI routes
-
-```text
 GET /api/v2/health
 GET /api/v2/live/race-state
 GET /api/v2/live/reliability-alerts
@@ -265,21 +373,47 @@ GET /api/v2/history/weekend
 GET /api/v2/stream/commentary
 GET /api/v2/intelligence/steward-alerts
 GET /api/v2/intelligence/predictor-feed
+GET /api/v2/intelligence/fia-updates
 POST /api/v2/webhooks/fia-document
+```
+
+### Mounted FIA documents routes
+
+```text
+GET /fia-documents/health
+GET /fia-documents/documents/latest
+GET /fia-documents/documents/grand-prix/{name}
+GET /fia-documents/documents/review-queue
+GET /fia-documents/insights/latest
+POST /fia-documents/documents/ingest
+POST /fia-documents/documents/reprocess
+POST /fia-documents/documents/debug/parse-url
 ```
 
 ## Verifying the Backends
 
-### Flask health
+### Dashboard backend health
 
 ```bash
-curl http://localhost:5001/api/health
+curl http://localhost:8000/api/health
 ```
 
-### FastAPI health
+### Mounted FIA documents health
 
 ```bash
-curl http://localhost:8000/api/v2/health
+curl http://localhost:8000/fia-documents/health
+```
+
+### Dashboard FIA updates feed
+
+```bash
+curl "http://localhost:8000/api/v2/intelligence/fia-updates?limit=6"
+```
+
+### FIA insights feed
+
+```bash
+curl "http://localhost:8000/fia-documents/insights/latest?limit=6"
 ```
 
 ### Historical event schedule
@@ -296,28 +430,39 @@ curl "http://localhost:8000/api/v2/history/weekend?year=2026&gp_name=Japanese%20
 
 ## Updating FIA-backed Data
 
-When new FIA documents are published:
-
-1. add the new source URLs to `fia_2026_document_sources.json`
-2. update `fia_2026_component_snapshot.csv`
-3. rebuild strategic circuit rankings if required
+The FIA monitor can pick up new documents automatically every 30 minutes inside the same FastAPI app. You can also run it manually:
 
 ```bash
-python3 build_strategic_circuits.py
+curl -X POST 'http://localhost:8000/fia-documents/documents/ingest?apply_processing=true'
 ```
 
-Then restart the application services.
+Useful review/recovery endpoints:
+
+```bash
+curl 'http://localhost:8000/fia-documents/documents/review-queue?needs_review_only=true'
+curl 'http://localhost:8000/fia-documents/documents/review-queue?failed_only=true'
+curl -X POST 'http://localhost:8000/fia-documents/documents/reprocess' \
+  -H 'Content-Type: application/json' \
+  -d '{"include_needs_review":true,"run_ingestion":true}'
+```
 
 ## Render Deployment Guidance
 
-The simplest production path is to deploy the FastAPI app as the public web service. In that setup, the same Render service can host:
+The simplest production path is to deploy the FastAPI dashboard app as the public web service. In that setup, the same service can host:
 
 - the dashboard at `/`
 - static assets under `/static/...`
 - the modern `/api/v2/...` API
 - the legacy `/api/...` routes that the dashboard still uses
+- the FIA documents subsystem under `/fia-documents/...`
 
 Before deploying, generate and commit the contents of `data/historical/2026/` so the `Past Races` tab serves historical weekends without runtime FastF1 work.
+
+The FIA ingestion subsystem needs:
+
+- Postgres
+- write access to `data/fia_docs/`
+- an LLM endpoint if you want local classification / extraction assistance
 
 Suggested Render settings:
 
@@ -326,10 +471,10 @@ Suggested Render settings:
 
 ### Recommended production setup
 
-- deploy `backend.api.main:app` as the Render web service
-- let Render assign the public URL
-- use that single public URL for both the website and API
-- keep the Flask process for local compatibility only, unless you explicitly want a second legacy deployment
+- deploy `backend.api.main:app` as the public web service
+- let the mounted FIA documents routes run inside that same service
+- only set `F1_FIA_DOCUMENTS_BASE_URL` if you intentionally move FIA ingestion to a second service
+- keep the old Flask process out of the local default path unless you explicitly need legacy compatibility
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for a broader deployment checklist.
 

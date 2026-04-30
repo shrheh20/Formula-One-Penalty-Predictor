@@ -108,3 +108,33 @@ class FIAIntelligenceService:
             "count": len(alerts),
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
+
+    def get_latest_document_insights(
+        self,
+        limit: int = 8,
+        grand_prix: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            payload = self.client.get_insights(limit=limit, grand_prix=grand_prix)
+            available = True
+            error = None
+        except httpx.HTTPError as exc:
+            payload = {
+                "headline": "FIA document insights unavailable.",
+                "summary": {
+                    "documents_considered": 0,
+                    "highlights_returned": 0,
+                    "needs_review_count": 0,
+                    "family_counts": {},
+                },
+                "highlights": [],
+            }
+            available = False
+            error = str(exc)
+
+        return {
+            "grand_prix": grand_prix,
+            "upstream_available": available,
+            "upstream_error": error,
+            **payload,
+        }

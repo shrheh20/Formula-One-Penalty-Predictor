@@ -12,9 +12,12 @@ from typing import Any
 
 import requests
 
+from .classifier import FiaDocumentClassifier
+from .llm_client import normalize_chat_completions_url
+
 LOGGER = logging.getLogger(__name__)
 
-EXTRACTION_VERSION = "2026.04.routed-v5"
+EXTRACTION_VERSION = "2026.04.routed-v6"
 
 SESSION_PATTERN = re.compile(
     r"\b(Free Practice 1|Free Practice 2|Free Practice 3|Practice 1|Practice 2|Practice 3|"
@@ -49,33 +52,16 @@ HEADERISH_DRIVER_TOKENS = {
     "all officials",
     "formula one",
 }
-DOCUMENT_TYPE_RULES: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r"\bsummons\b", re.IGNORECASE), "summons"),
-    (re.compile(r"\bdecision\b", re.IGNORECASE), "decision"),
-    (re.compile(r"\binfringement\b", re.IGNORECASE), "infringement"),
-    (re.compile(r"\bentry list\b", re.IGNORECASE), "entry_list"),
-    (re.compile(r"\bstarting grid\b", re.IGNORECASE), "starting_grid"),
-    (re.compile(r"\bclassification\b", re.IGNORECASE), "classification"),
-    (re.compile(r"\bnew pu elements\b", re.IGNORECASE), "new_pu_elements"),
-    (re.compile(r"\bpu elements used per driver\b", re.IGNORECASE), "pu_usage"),
-    (re.compile(r"\bpower unit information\b", re.IGNORECASE), "power_unit_information"),
-    (re.compile(r"\bpost-race checks?\b", re.IGNORECASE), "post_race_checks"),
-    (re.compile(r"\bcar presentation submissions\b", re.IGNORECASE), "car_presentation_submissions"),
-    (
-        re.compile(r"parts and parameters.+parc ferm[ée]|parts and parameters.+parc ferme", re.IGNORECASE),
-        "parc_ferme_changes",
-    ),
-    (re.compile(r"\bchampionship points\b", re.IGNORECASE), "championship_points"),
-    (re.compile(r"\bcurfew\b", re.IGNORECASE), "curfew"),
-    (re.compile(r"\bparc ferm[ée] issues\b|\bparc ferme issues\b", re.IGNORECASE), "parc_ferme_issues"),
-    (re.compile(r"\bscrutineering\b", re.IGNORECASE), "scrutineering"),
-    (re.compile(r"\bprocedure\b", re.IGNORECASE), "procedure"),
-    (re.compile(r"\brace director", re.IGNORECASE), "race_director_notes"),
-    (re.compile(r"\bcompetition notes\b", re.IGNORECASE), "competition_notes"),
-    (re.compile(r"\bvisa\b", re.IGNORECASE), "visa"),
-    (re.compile(r"\btimetable\b", re.IGNORECASE), "timetable"),
-]
-LLM_FIRST_TYPES = {"summons", "decision", "infringement", "entry_list", "other"}
+LLM_FIRST_TYPES = {
+    "summons",
+    "steward_decision",
+    "penalty_notice",
+    "infringement_race_deleted_lap_times",
+    "infringement_qualifying_deleted_lap_times",
+    "infringement_free_practice_3_deleted_lap_times",
+    "car_display_procedure",
+    "other",
+}
 COMPONENT_ORDER = ["ICE", "TC", "EXH", "MGU-K", "ES", "PU-CE", "PU-ANC"]
 KNOWN_TEAMS = [
     "McLaren Mastercard F1 Team",
@@ -124,6 +110,7 @@ KNOWN_DRIVERS = [
 @dataclass(slots=True)
 class ExtractionEnvelope:
     document_type: str
+    document_family: str
     extraction_status: str
     extraction_version: str
     extraction_confidence: float
@@ -137,9 +124,9 @@ class LlmExtractionClient:
     """Optional JSON extractor against an OpenAI-compatible chat endpoint."""
 
     def __init__(self) -> None:
-        self.api_url = os.getenv("LLM_API_URL", "").strip()
+        self.api_url = normalize_chat_completions_url(os.getenv("LLM_API_URL", ""))
         self.api_key = os.getenv("LLM_API_KEY", "").strip()
-        self.model = os.getenv("LLM_MODEL", "").strip()
+        self.model = os.getenv("LLM_MODEL", "qwen3.5:2b").strip()
         self.timeout = int(os.getenv("LLM_TIMEOUT_SECONDS", "45"))
 
     @property
@@ -207,8 +194,13 @@ class LlmExtractionClient:
 
 
 class DocumentExtractionPipeline:
-    def __init__(self, llm_client: LlmExtractionClient | None = None) -> None:
+    def __init__(
+        self,
+        llm_client: LlmExtractionClient | None = None,
+        classifier: FiaDocumentClassifier | None = None,
+    ) -> None:
         self.llm_client = llm_client or LlmExtractionClient()
+        self.classifier = classifier or FiaDocumentClassifier()
 
     def extract(
         self,
@@ -219,9 +211,12 @@ class DocumentExtractionPipeline:
         doc_number: int,
         is_recalled: bool,
     ) -> ExtractionEnvelope:
-        document_type = self.classify_document(title=title, text=text)
+        classification = self.classifier.classify(title=title, text=text)
+        document_type = classification.document_type
+        document_family = classification.document_family
         parser_output = self._deterministic_parse(
             document_type=document_type,
+            document_family=document_family,
             title=title,
             text=text,
             grand_prix=grand_prix,
@@ -241,18 +236,25 @@ class DocumentExtractionPipeline:
                     "doc_number": doc_number,
                     "title": title,
                     "document_type": document_type,
+                    "document_family": document_family,
+                    "classification_provider": classification.provider,
                 },
                 text=text,
             )
 
         extracted = self._merge_outputs(parser_output=parser_output, ai_result=ai_result)
-        validation = self._validate_extracted(document_type=document_type, extracted=extracted)
+        validation = self._validate_extracted(
+            document_type=document_type,
+            document_family=document_family,
+            extracted=extracted,
+        )
 
         if is_recalled:
             extracted["recalled"] = True
             extracted["recalled_reason"] = "Portal row marked as recalled by FIA"
             return ExtractionEnvelope(
                 document_type=document_type,
+                document_family=document_family,
                 extraction_status="recalled",
                 extraction_version=EXTRACTION_VERSION,
                 extraction_confidence=0.0,
@@ -277,10 +279,18 @@ class DocumentExtractionPipeline:
             "parser_strategy": parser_output["parser_strategy"],
             "llm_used": bool(ai_result and ai_result.get("provider") == "llm"),
             "document_type": document_type,
+            "document_family": document_family,
+            "classification": {
+                "provider": classification.provider,
+                "confidence": classification.confidence,
+                "rationale": classification.rationale,
+                "supporting_signals": classification.supporting_signals,
+            },
         }
 
         return ExtractionEnvelope(
             document_type=document_type,
+            document_family=document_family,
             extraction_status="needs_review" if needs_review else "ready",
             extraction_version=EXTRACTION_VERSION,
             extraction_confidence=confidence,
@@ -292,19 +302,17 @@ class DocumentExtractionPipeline:
 
     @staticmethod
     def classify_document(*, title: str, text: str) -> str:
-        for pattern, document_type in DOCUMENT_TYPE_RULES:
-            if pattern.search(title):
-                return document_type
-        haystack = f"{title}\n{text[:3000]}"
-        for pattern, document_type in DOCUMENT_TYPE_RULES:
-            if pattern.search(haystack):
-                return document_type
-        return "other"
+        return FiaDocumentClassifier.classify_with_rules(title=title, text=text).document_type
+
+    @staticmethod
+    def classify_document_family(*, title: str, text: str, document_type: str) -> str:
+        return FiaDocumentClassifier.classify_with_rules(title=title, text=text).document_family
 
     def _deterministic_parse(
         self,
         *,
         document_type: str,
+        document_family: str,
         title: str,
         text: str,
         grand_prix: str,
@@ -316,6 +324,7 @@ class DocumentExtractionPipeline:
             "doc_number": doc_number,
             "title": title,
             "document_type": document_type,
+            "document_family": document_family,
             "session": self._extract_session(title=title, text=normalized),
             "car_numbers": sorted({int(match) for match in CAR_NUMBER_PATTERN.findall(f"{title} {normalized}")}),
             "drivers": [],
@@ -332,36 +341,68 @@ class DocumentExtractionPipeline:
             "confidence": 0.45,
         }
 
-        if document_type in {"summons", "decision", "infringement"}:
+        if document_type in {
+            "summons",
+            "steward_decision",
+            "penalty_notice",
+            "infringement_race_deleted_lap_times",
+            "infringement_qualifying_deleted_lap_times",
+            "infringement_free_practice_3_deleted_lap_times",
+            "decision_qualifying_sc2_sc1_times",
+        }:
             parser_output.update(self._parse_stewards_document(text=text, title=title))
-        elif document_type == "entry_list":
-            parser_output.update(self._parse_entry_list(text))
         elif document_type == "new_pu_elements":
             parser_output.update(self._parse_component_table(text, title))
-        elif document_type == "pu_usage":
+        elif document_type == "component_usage":
             parser_output.update(self._parse_pu_usage_table(text, title))
+        elif document_type == "entry_list":
+            parser_output.update(self._parse_entry_list(text))
         elif document_type == "championship_points":
             parser_output.update(self._parse_championship_points(text=text, title=title))
-        elif document_type in {"classification", "starting_grid"}:
+        elif document_type in {
+            "final_race_classification",
+            "provisional_race_classification",
+            "final_qualifying_classification",
+            "provisional_qualifying_classification",
+            "final_starting_grid",
+            "provisional_starting_grid",
+            "final_sprint_qualifying_classification",
+            "provisional_sprint_starting_grid",
+            "final_sprint_starting_grid",
+            "provisional_sprint_classification",
+            "final_sprint_classification",
+            "free_practice_1_classification",
+            "free_practice_2_classification",
+            "free_practice_3_classification",
+        }:
             parser_output.update(self._parse_classification_table(text, title, document_type))
         elif document_type in {
-            "scrutineering",
-            "competition_notes",
-            "race_director_notes",
-            "visa",
-            "timetable",
-            "procedure",
-            "championship_points",
             "curfew",
+            "timetable",
+            "race_director_notes",
+            "car_display_procedure",
             "car_presentation_submissions",
-            "parc_ferme_changes",
+            "competition_notes_pirelli_preview_v2",
+            "pre_race_procedure",
+            "post_race_procedure",
+            "post_qualifying_procedure",
+            "post_sprint_procedure",
+            "parc_ferme_parts_and_parameters_changes",
             "parc_ferme_issues",
+            "scrutineering_report",
+            "race_scrutineering",
+            "p3_and_qualifying_scrutineering",
         }:
             parser_output.update(self._parse_operational_document(text=text, title=title, document_type=document_type))
-        elif document_type in {"power_unit_information", "post_race_checks"}:
+        elif document_type in {"technical_directive", "post_race_checks"}:
             parser_output.update(self._parse_technical_report(text=text, title=title, document_type=document_type))
         else:
-            parser_output["unknown_document_signals"].append("unmapped_document_family")
+            parser_output["unknown_document_signals"].extend(
+                [
+                    "unmapped_document_family",
+                    f"unknown_document_title:{self._normalize_unknown_signal(title)}",
+                ]
+            )
             parser_output["parser_strategy"] = "generic-fallback"
             parser_output["confidence"] = 0.3
 
@@ -381,6 +422,7 @@ class DocumentExtractionPipeline:
     def _merge_outputs(parser_output: dict[str, Any], ai_result: dict[str, Any] | None) -> dict[str, Any]:
         merged = {
             "document_type": parser_output["document_type"],
+            "document_family": parser_output.get("document_family", "other"),
             "session": parser_output["session"],
             "car_numbers": parser_output["car_numbers"],
             "drivers": parser_output["drivers"],
@@ -399,6 +441,8 @@ class DocumentExtractionPipeline:
             return merged
 
         for key in (
+            "document_type",
+            "document_family",
             "session",
             "car_numbers",
             "drivers",
@@ -416,10 +460,24 @@ class DocumentExtractionPipeline:
             ai_value = ai_result.get(key)
             if ai_value not in (None, "", [], {}):
                 merged[key] = ai_value
+        merged["drivers"] = DocumentExtractionPipeline._normalize_named_entities(
+            merged.get("drivers"),
+            entity_type="driver",
+        )
+        merged["teams"] = DocumentExtractionPipeline._normalize_named_entities(
+            merged.get("teams"),
+            entity_type="team",
+        )
+        merged["car_numbers"] = DocumentExtractionPipeline._normalize_car_numbers(merged.get("car_numbers"))
         return merged
 
     @staticmethod
-    def _validate_extracted(*, document_type: str, extracted: dict[str, Any]) -> dict[str, Any]:
+    def _validate_extracted(
+        *,
+        document_type: str,
+        document_family: str,
+        extracted: dict[str, Any],
+    ) -> dict[str, Any]:
         issues: list[str] = []
 
         for key in ("drivers", "teams"):
@@ -445,7 +503,7 @@ class DocumentExtractionPipeline:
                 cleaned_values.append(normalized)
             extracted[key] = list(dict.fromkeys(cleaned_values))
 
-        if document_type in {"summons", "decision", "infringement"} and not extracted.get("incident_summary"):
+        if document_family == "steward_decision" and not extracted.get("incident_summary"):
             issues.append("missing_incident_summary")
         if document_type == "championship_points":
             standings = (extracted.get("entries") or {}).get("drivers_standings", [])
@@ -459,8 +517,59 @@ class DocumentExtractionPipeline:
                 issues.append("duplicate_championship_positions")
         if document_type == "other":
             issues.append("unknown_document_type")
+        if document_family == "other":
+            issues.append("unknown_document_family")
+        taxonomy_unknown_signals = {
+            signal
+            for signal in extracted.get("unknown_document_signals") or []
+            if signal == "unmapped_document_family" or str(signal).startswith("unknown_document_title:")
+        }
+        if taxonomy_unknown_signals:
+            issues.append("unknown_document_requires_taxonomy_review")
 
         return {"issues": issues}
+
+    @staticmethod
+    def _normalize_named_entities(values: Any, *, entity_type: str) -> list[str]:
+        if not isinstance(values, list):
+            return []
+
+        normalized: list[str] = []
+        preferred_keys = ("driver", "name") if entity_type == "driver" else ("team", "constructor", "name")
+        for value in values:
+            if isinstance(value, dict):
+                extracted = None
+                for key in preferred_keys:
+                    candidate = value.get(key)
+                    if isinstance(candidate, str) and candidate.strip():
+                        extracted = candidate
+                        break
+                value = extracted or ""
+            if isinstance(value, (int, float)):
+                value = str(value)
+            if not isinstance(value, str):
+                continue
+            cleaned = " ".join(value.split())
+            if cleaned:
+                normalized.append(cleaned)
+        return list(dict.fromkeys(normalized))
+
+    @staticmethod
+    def _normalize_car_numbers(values: Any) -> list[int]:
+        if not isinstance(values, list):
+            return []
+        normalized: list[int] = []
+        for value in values:
+            if isinstance(value, str) and value.isdigit():
+                normalized.append(int(value))
+            elif isinstance(value, int):
+                normalized.append(value)
+        return sorted(set(normalized))
+
+    @staticmethod
+    def _normalize_unknown_signal(value: str) -> str:
+        cleaned = re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
+        return cleaned[:80] or "untitled"
 
     @staticmethod
     def _extract_session(*, title: str, text: str) -> str | None:
@@ -580,7 +689,11 @@ class DocumentExtractionPipeline:
                 continue
             if not entry_section:
                 continue
-            if "In addition to the list of cars" in line:
+            if (
+                "In addition to the list of cars" in line
+                or line.startswith("Page ")
+                or line.startswith("Doc ")
+            ):
                 break
             if not re.match(r"^\d{1,3}\s+[A-Z]{3}\s+", line):
                 continue
@@ -762,13 +875,13 @@ class DocumentExtractionPipeline:
 
             if current_section == "drivers":
                 entry = self._parse_championship_driver_line(line, driver_aliases)
-                if entry:
+                if entry and not any(existing.get("driver") == entry["driver"] for existing in driver_entries):
                     driver_entries.append(entry)
                     continue
             elif current_section == "entrants":
-                team = self._find_known_team(line)
-                if team and not any(existing.get("team") == team for existing in entrant_entries):
-                    entrant_entries.append({"team": team})
+                entry = self._parse_championship_team_line(line)
+                if entry and not any(existing.get("team") == entry["team"] for existing in entrant_entries):
+                    entrant_entries.append(entry)
 
         drivers = [entry["driver"] for entry in driver_entries]
         teams = [entry["team"] for entry in entrant_entries if entry.get("team")]
@@ -1029,29 +1142,20 @@ class DocumentExtractionPipeline:
         if not re.fullmatch(r"[A-Z]{3}", nationality):
             return None
 
-        constructor_tokens = [
-            "McLaren Mercedes",
-            "Mercedes",
-            "Red Bull Racing Red Bull Ford",
-            "Ferrari",
-            "Atlassian Williams Mercedes",
-            "Racing Bulls Red Bull Ford",
-            "Aston Martin Aramco Honda",
-            "Haas Ferrari",
-            "Audi",
-            "Alpine Mercedes",
-            "Cadillac Ferrari",
-        ]
-
         constructor = None
         team = None
-        for token in constructor_tokens:
+        for token, canonical_team in self._constructor_team_aliases():
             if rest.endswith(token):
                 constructor = token
-                team = rest[: -len(token)].strip()
+                team = canonical_team
                 break
-        if not constructor or not team:
-            return None
+
+        if not constructor:
+            canonical_team = self._find_known_team(rest)
+            if not canonical_team:
+                return None
+            constructor = rest
+            team = canonical_team
 
         return {
             "car_number": int(match.group("car_number").lstrip("0") or "0"),
@@ -1091,37 +1195,68 @@ class DocumentExtractionPipeline:
             parts = driver.replace("ü", "u").replace("Ü", "U").split()
             if len(parts) >= 2:
                 mapping[f"{parts[0][0].upper()}. {parts[-1].upper()}"] = driver
+                mapping[f"{parts[0][0].upper()} {parts[-1].upper()}"] = driver
         return mapping
+
+    @staticmethod
+    def _constructor_team_aliases() -> list[tuple[str, str]]:
+        return [
+            ("McLaren Mercedes", "McLaren Mastercard F1 Team"),
+            ("Mercedes", "Mercedes-AMG PETRONAS F1 Team"),
+            ("Red Bull Racing Red Bull Ford", "Oracle Red Bull Racing"),
+            ("Ferrari", "Scuderia Ferrari HP"),
+            ("Atlassian Williams Mercedes", "Atlassian Williams F1 Team"),
+            ("Racing Bulls Red Bull Ford", "Visa Cash App Racing Bulls F1 Team"),
+            ("Aston Martin Aramco Honda", "Aston Martin Aramco F1 Team"),
+            ("Haas Ferrari", "TGR Haas F1 Team"),
+            ("Audi", "Audi Revolut F1 Team"),
+            ("Alpine Mercedes", "BWT Alpine F1 Team"),
+            ("Cadillac Ferrari", "Cadillac Formula 1 Team"),
+        ]
 
     def _parse_championship_driver_line(
         self, line: str, driver_aliases: dict[str, str]
     ) -> dict[str, Any] | None:
-        for abbr, driver in driver_aliases.items():
-            if abbr in line:
-                numbers = [int(value) for value in re.findall(r"\b\d+\b", line)]
-                position = None
-                total_points = None
-                if len(numbers) >= 4 and numbers[0] == numbers[2] and numbers[1] == numbers[3]:
-                    total_points = numbers[0]
-                    position = numbers[1]
-                elif len(numbers) >= 3 and numbers[0] == numbers[-1] and numbers[1] == 0:
-                    total_points = 0
-                    position = numbers[0]
-                elif len(numbers) >= 3 and numbers[0] == numbers[-1] and numbers[1] <= 30:
-                    total_points = numbers[0]
-                    position = numbers[1]
-                elif len(numbers) >= 3 and numbers[0] > 30 and numbers[1] <= 30 and numbers[-1] <= 30:
-                    total_points = numbers[1]
-                    position = numbers[-1]
-                elif len(numbers) >= 2 and numbers[0] <= 30 and numbers[1] <= 30:
-                    position = numbers[0]
-                    total_points = numbers[1]
-                elif numbers:
-                    total_points = numbers[0]
-                return {
-                    "driver": driver,
-                    "position": position,
-                    "total_points": total_points,
-                    "raw_line": line,
-                }
+        driver = self._find_known_driver(line)
+        if not driver:
+            for abbr, mapped_driver in driver_aliases.items():
+                if abbr in line:
+                    driver = mapped_driver
+                    break
+        if not driver:
+            return None
+
+        numbers = [int(value) for value in re.findall(r"\b\d+\b", line)]
+        if not numbers:
+            return None
+
+        position = next((value for value in numbers if 1 <= value <= 30), None)
+        total_points = numbers[-1]
+        if position == total_points and len(numbers) >= 2:
+            total_points = numbers[-2]
+
+        return {
+            "driver": driver,
+            "position": position,
+            "total_points": total_points,
+            "raw_line": line,
+        }
         return None
+
+    def _parse_championship_team_line(self, line: str) -> dict[str, Any] | None:
+        team = self._find_known_team(line)
+        if not team:
+            return None
+
+        numbers = [int(value) for value in re.findall(r"\b\d+\b", line)]
+        position = next((value for value in numbers if 1 <= value <= 30), None)
+        total_points = numbers[-1] if numbers else None
+        if position == total_points and len(numbers) >= 2:
+            total_points = numbers[-2]
+
+        return {
+            "team": team,
+            "position": position,
+            "total_points": total_points,
+            "raw_line": line,
+        }

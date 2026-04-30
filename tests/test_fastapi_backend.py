@@ -64,6 +64,56 @@ class _FakeFIAIntelligenceService:
             "upstream_error": None,
         }
 
+    def get_latest_document_insights(self, limit: int = 8, grand_prix: str | None = None) -> dict:
+        return {
+            "grand_prix": grand_prix,
+            "headline": "1 steward action(s)",
+            "summary": {
+                "documents_considered": 3,
+                "highlights_returned": 1,
+                "critical_count": 1,
+                "family_counts": {"steward_decision": 1},
+            },
+            "critical_highlights": [
+                {
+                    "title": "Decision - Car 81",
+                    "category_label": "Stewards",
+                    "importance": "high",
+                    "what_happened": "Stewards published an official decision affecting the weekend.",
+                    "dashboard_summary": "Stewards reviewed Car 81 and issued an official decision that could affect the competitive picture.",
+                    "why_it_matters": "Why it matters: this may change official steward status, penalties, or investigations.",
+                    "affected_entities": "Drivers: Oscar Piastri",
+                    "drivers": ["Oscar Piastri"],
+                    "teams": [],
+                    "published_time": "2026-03-29T12:16:00+00:00",
+                }
+            ],
+            "document_feed": [
+                {
+                    "title": "Decision - Car 81",
+                    "category_label": "Stewards",
+                    "importance": "high",
+                    "what_happened": "Stewards published an official decision affecting the weekend.",
+                    "dashboard_summary": "Stewards reviewed Car 81 and issued an official decision that could affect the competitive picture.",
+                    "why_it_matters": "Why it matters: this may change official steward status, penalties, or investigations.",
+                    "affected_entities": "Drivers: Oscar Piastri",
+                    "drivers": ["Oscar Piastri"],
+                    "teams": [],
+                    "published_time": "2026-03-29T12:16:00+00:00",
+                }
+            ],
+            "highlights": [
+                {
+                    "title": "Decision - Car 81",
+                    "category_label": "Stewards",
+                    "what_happened": "Stewards published an official decision affecting the weekend.",
+                    "dashboard_summary": "Stewards reviewed Car 81 and issued an official decision that could affect the competitive picture.",
+                }
+            ],
+            "upstream_available": True,
+            "upstream_error": None,
+        }
+
 
 app.dependency_overrides[get_fia_intelligence_service] = _FakeFIAIntelligenceService
 client = TestClient(app)
@@ -109,6 +159,19 @@ class FastAPIBackendTests(unittest.TestCase):
         self.assertEqual(payload["race_number"], 5)
         self.assertEqual(len(payload["predictions"]), 1)
         self.assertEqual(payload["summary"]["fia_alerts_count"], 1)
+
+    def test_fia_updates_endpoint(self) -> None:
+        response = client.get("/api/v2/intelligence/fia-updates?limit=4")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["summary"]["highlights_returned"], 1)
+        self.assertEqual(payload["highlights"][0]["category_label"], "Stewards")
+
+    def test_embedded_fia_documents_health_endpoint(self) -> None:
+        response = client.get("/fia-documents/health")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "ok")
 
     def test_legacy_health_endpoint(self) -> None:
         response = client.get("/api/health")

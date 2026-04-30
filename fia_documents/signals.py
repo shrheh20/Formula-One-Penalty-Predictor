@@ -40,21 +40,30 @@ class SignalBuilder:
     def build(self, document: Document) -> list[SignalDraft]:
         extracted = document.extracted_data or {}
         document_type = document.document_type or extracted.get("document_type") or "other"
+        document_family = document.document_family or extracted.get("document_family") or "other"
 
         builders = {
             "new_pu_elements": self._build_component_change_signals,
-            "pu_usage": self._build_component_usage_signals,
-            "summons": self._build_steward_matter_signals,
-            "decision": self._build_steward_matter_signals,
-            "infringement": self._build_steward_matter_signals,
-            "classification": self._build_session_result_signal,
-            "starting_grid": self._build_session_result_signal,
+            "component_usage": self._build_component_usage_signals,
+            "entry_list": self._build_session_result_signal,
             "championship_points": self._build_points_signal,
+            "parc_ferme_parts_and_parameters_changes": self._build_parc_ferme_signal,
             "parc_ferme_issues": self._build_parc_ferme_signal,
-            "parc_ferme_changes": self._build_parc_ferme_signal,
+            "technical_directive": self._build_parc_ferme_signal,
+            "post_race_checks": self._build_parc_ferme_signal,
         }
-        builder = builders.get(document_type, self._build_document_posted_signal)
-        return builder(document, extracted)
+        builder = builders.get(document_type)
+        if builder is not None:
+            return builder(document, extracted)
+        if document_family == "steward_decision":
+            return self._build_steward_matter_signals(document, extracted)
+        if document_family == "sporting_results":
+            return self._build_session_result_signal(document, extracted)
+        if document_family in {"scrutineering", "technical_compliance", "technical_directive"}:
+            return self._build_parc_ferme_signal(document, extracted)
+        if document_family == "component_allocation":
+            return self._build_component_usage_signals(document, extracted)
+        return self._build_document_posted_signal(document, extracted)
 
     def build_alert(self, signal: SignalDraft) -> AlertDraft | None:
         category_titles = {
@@ -106,6 +115,7 @@ class SignalBuilder:
             "doc_number": document.doc_number,
             "title": document.title,
             "document_type": document.document_type,
+            "document_family": document.document_family,
             "incident_summary": extracted.get("incident_summary"),
             "verdict_summary": extracted.get("verdict_summary"),
             "penalty_type": extracted.get("penalty_type"),
